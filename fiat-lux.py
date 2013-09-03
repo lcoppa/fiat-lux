@@ -1,7 +1,8 @@
 #!/usr/bin/env python3 -tt
 
 """ Pilon application
-Controls RGB LEDs via network variables (color and brightness) and pressure (brightness)
+    Controls RGB LEDs via network variables (color and brightness) and
+    pressure (brightness)
 """
 
 #
