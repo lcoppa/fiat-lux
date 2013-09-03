@@ -63,10 +63,11 @@ if pylon.lts.TESTMODE:
 ###########
 # init I/O
 ###########
-# Create the object to control the LEDs. Assume the PWM board for the LEDs is at address 0x40
-# if not change it in the constants above
+# Create the object to control the LEDs. Assume the PWM board for the LEDs
+# is at address 0x40 if not change it in the constants above
 # chek out the tutorial here
-# http://learn.adafruit.com/adafruit-16-channel-servo-driver-with-raspberry-pi/library-reference
+# http://learn.adafruit.com/adafruit-16-channel-servo-driver-with-raspberry-pi/
+# library-reference
 myLed = LED(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, True)
 
 # Create the pressure sensor object
@@ -76,51 +77,141 @@ mySensor = PRESSURE_SENSOR()
 # init Pilon
 ############
 
-# init logger
-logger = logging.getLogger('pylon-rtk.testapp')
-# create application object
-app = pylon.application.Application('libpylon-stack.so')
 
-# LTS trace logging
-# Simmply do not set this property if you do not wish to have this
-# low-level trace logging enabled.
-app.stackTracefile = 'pylon-lts.log'
+def main():
+    # create application object
+    app = pylon.device.application.Application(
+        use_isi=False,
+        log_file=arguments.log + '-rtk.log',
+        log_level=logging.DEBUG if arguments.debug else logging.ERROR
+    )
 
-# Determine IP-852 device URI and the node's unique Id, based on
-# the unique hostname. You could add definitions matching your
-# configuration to this dictionary.
-#
-# The IP address in the URI must be numeric or fqdn; no .local address will
-# work (for now)
-myMachines = {
-    'luca-raspi3':          pylon.lts.UNIQUE_ID_TYPE(0xFE, 0xAA, 0xC5, 0xE8, 0x4C, 0x92),
-    'luca-ubuntu-vm':       pylon.lts.UNIQUE_ID_TYPE(0xFE, 0xAA, 0xC5, 0xE8, 0x4C, 0x93),
-    'luca-debian-full-vm':  pylon.lts.UNIQUE_ID_TYPE(0xFE, 0xAA, 0xC5, 0xE8, 0x4C, 0x94)
-    }
+    #
+    # Create the two blocks. Mandatory members are automatically implemented.
+    #
+    sensor = app.block(
+            profile=SFPTopenLoopSensor(),
+            ext_name='ols',
+            snvt_xxx=SNVT_temp_p
+    )
+    actuator = app.block(
+            profile=SFPTopenLoopActuator(),
+            ext_name='ola',
+            snvt_xxx=SNVT_temp_p
+    )
 
-# get text hostname of the local machine
-host = socket.gethostname()
-# get the numeric IP address from the hostname; this might require avahid
-ipAddr = socket.gethostbyname(host+'.local')
-print('Host '+host+' has IP address '+ipAddr)
+    #
+    #   Handle updates to the actuator's input:
+    #
+    # noinspection PyUnusedLocal
+    def update_handler(sender, arguments):
+        with sensor.nvoValue, actuator.nviValue:
+            sensor.nvoValue.data = 0.5 * actuator.nviValue.data
+            print('Update received and processed: {0} = 0.5 * {1}'.format(
+                sensor.nvoValue.data,
+                actuator.nviValue.data
+            ))
 
-# fill in the app network properties
-if host in myMachines:
-    # URI format is '//192.168.1.14:1628/uc'
-    app.deviceUri = '//'+ipAddr+':1628/uc'
-    print ("Host URI is " + app.deviceUri)
-    app.uniqueId = myMachines[host]
-    print ("Host PID is " + str(app.uniqueId))
-else:
-    uri = input('''
-                Cannot get IP address for host '{0}'.
-                Please enter manually the device URI, e.g. //10.3.4.5:1628/uc
-                You can use //0.0.0.0:1628/uc if you have only one interface.
-                Enter an empty string to abort.> '''.format(host))
-    if len(uri):
-        app.deviceUri = uri
-    else:
-        exit()
+    actuator.nviValue.OnUpdate += update_handler
+
+    #
+    #   Start pilon:
+    #
+
+    # Determine IP-852 device URI and the node's unique Id, based on
+    # the unique hostname. You could add definitions matching your
+    # configuration to this dictionary.
+    #
+    # The IP address in the URI must be numeric or fqdn; no .local address will
+    # work (for now)
+    myMachines = {
+        'luca-raspi3':          pylon.lts.UNIQUE_ID_TYPE(0xFE, 0xAA,
+                                                         0xC5, 0xE8,
+                                                         0x4C, 0x92),
+        'luca-ubuntu-vm':       pylon.lts.UNIQUE_ID_TYPE(0xFE, 0xAA,
+                                                         0xC5, 0xE8,
+                                                         0x4C, 0x93),
+        'luca-debian-full-vm':  pylon.lts.UNIQUE_ID_TYPE(0xFE, 0xAA,
+                                                         0xC5, 0xE8,
+                                                         0x4C, 0x94)
+        }
+
+    # get text hostname of the local machine
+    host = socket.gethostname()
+    # get the numeric IP address from the hostname; this might require avahid
+    ipAddr = socket.gethostbyname(host+'.local')
+    print('Host '+host+' has IP address '+ipAddr)
+
+    # fill in the app network properties
+    if host in myMachines:
+        # URI format is '//192.168.1.14:1628/uc'
+        app.device_uri = '//'+ipAddr+':1628/uc'
+        print ("Host URI is " + app.device_uri)
+        app.programId = myMachines[host]
+        print ("Host PID is " + str(app.programId))
+
+
+    app.persistence_path = arguments.nvd
+
+    if arguments.debug:
+        app.stack_tracefile = arguments.log + '-lts.log'
+        if app.isi:
+            app.isi.tracefile(arguments.log + '-isi.log', False)
+
+    app.start()
+
+    #
+    #   Run the application:
+    #
+    try:
+        done = False
+
+        while not done:
+
+            #
+            #   Service pilon
+            #
+            app.service()
+
+            #
+            #   Interactive user input
+            #
+            i, o, e = select.select([sys.stdin], [], [], 0.01)
+            if i:
+                try:
+
+                    selection = sys.stdin.readline().strip().lower()
+                    if selection == 'exit':
+                        print('Winding down...')
+                        done = True
+                    elif selection == 'service':
+                        app.send_service_message()
+                    elif selection == 'wink':
+                        # Simulate receipt of a Wink message for testing:
+                        app.OnWink.fire(app, None)
+                    else:
+                        print(
+                            'Valid commands are "exit", "service", "wink"'
+                        )
+                except Exception as e:
+                    print(e)
+    finally:
+
+        #
+        #   Stop pilon
+        #
+        app.stop()
+        print("Good bye.")
+
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+
+
 
 print('Joining the channel at {0}'.format(app.deviceUri))
 
