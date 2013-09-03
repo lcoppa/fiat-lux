@@ -13,13 +13,28 @@
 # www.echelon.com/license/examplesoftware/.
 #
 
-# imports
+##############################################################################
+# Imports
+##############################################################################
+
+# Useful imports
 import sys, select, logging, socket
-# for Pilon
-import pylon
-import pylon.resources.SNVT_count
-import pylon.resources.SNVT_switch
-# for I/O
+
+# Import standard Python modules required by Pilon
+import argparse
+import logging
+import select
+import sys
+
+# Import Pilon
+import pylon.device
+
+# Import Pilon resources used by this application
+from pylon.resources.SNVT_temp_p import SNVT_temp_p
+from pylon.resources.SFPTopenLoopSensor import SFPTopenLoopSensor
+from pylon.resources.SFPTopenLoopActuator import SFPTopenLoopActuator
+
+# Import for I/O
 from led_driver.led_set import LED
 from fsr_read.pressure_sensor import PRESSURE_SENSOR
 
@@ -28,18 +43,17 @@ from fsr_read.pressure_sensor import PRESSURE_SENSOR
 
 # some constants
 PRESSURE_SENSOR_PIN = 18                # used by the PRESSURE object
-PRESSURE_DIMMING_THRESHOLD = 2000       # pressure reading below which we cycle LED brightness
+PRESSURE_DIMMING_THRESHOLD = 2000       # pressure reading below which we cycle
+                                        # LED brightness
 PWM_BOARD_I2C_ADDRESS = 0x40            # used by the LED object
 PWM_FREQ = 1000                         # in Hz, used by the LED object
 RED_LED_PWM_CHANNEL = 0                 # used by the LED object
 GREEN_LED_PWM_CHANNEL = 1               # used by the LED object
 BLU_LED_PWM_CHANNEL = 2                 # used by the LED object
 
-#####################################################################################
-#
+###############################################################################
 # Init
-#
-#####################################################################################
+###############################################################################
 print('Initialising the FiatLux Application.')
 print('Type CTRL-c to exit.')
 if pylon.lts.TESTMODE:
