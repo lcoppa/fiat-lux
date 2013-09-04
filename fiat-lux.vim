@@ -101,6 +101,7 @@ set tabstop=4
 set textwidth=79
 set updatetime=1000
 set wildignore=*.pyc
+set window=47
 set nowritebackup
 let s:so_save = &so | let s:siso_save = &siso | set so=0 siso=0
 let v:this_session=expand("<sfile>:p")
@@ -110,7 +111,8 @@ if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
   let s:wipebuf = bufnr('%')
 endif
 set shortmess=aoO
-badd +113 ~/picode/fiat-lux/fiat-lux.py
+badd +179 ~/picode/fiat-lux/fiat-lux.py
+badd +183 ~/pilon/packages/minidemo.py
 args fiat-lux.py
 edit ~/picode/fiat-lux/fiat-lux.py
 set splitbelow splitright
@@ -122,8 +124,8 @@ set nosplitbelow
 set nosplitright
 wincmd t
 set winheight=1 winwidth=1
-exe 'vert 1resize ' . ((&columns * 89 + 89) / 178)
-exe 'vert 2resize ' . ((&columns * 88 + 89) / 178)
+exe 'vert 1resize ' . ((&columns * 89 + 102) / 204)
+exe 'vert 2resize ' . ((&columns * 114 + 102) / 204)
 argglobal
 let s:cpo_save=&cpo
 set cpo&vim
@@ -272,15 +274,17 @@ setlocal nowinfixwidth
 set nowrap
 setlocal nowrap
 setlocal wrapmargin=0
-let s:l = 113 - ((17 * winheight(0) + 17) / 34)
+81
+normal zo
+let s:l = 196 - ((37 * winheight(0) + 23) / 46)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-113
-normal! 08l
+196
+normal! 037l
 wincmd w
 argglobal
-edit ~/picode/fiat-lux/fiat-lux.py
+edit ~/pilon/packages/minidemo.py
 let s:cpo_save=&cpo
 set cpo&vim
 inoremap <buffer> <silent> <C-Space> =RopeCodeAssistInsertMode()
@@ -377,8 +381,8 @@ setlocal iminsert=2
 setlocal imsearch=2
 setlocal include=^\\s*\\(from\\|import\\)
 setlocal includeexpr=substitute(v:fname,'\\.','/','g')
-setlocal indentexpr=pymode#indent#Indent(v:lnum)
-setlocal indentkeys=!^F,o,O,<:>,0),0],0},=elif,=except
+setlocal indentexpr=GetPythonIndent(v:lnum)
+setlocal indentkeys=!^F,o,O,<:>,0),0],0},=elif,=except,<:>,=elif,=except
 setlocal noinfercase
 setlocal iskeyword=@,48-57,_,192-255
 setlocal keywordprg=pydoc
@@ -398,7 +402,7 @@ setlocal path=
 setlocal nopreserveindent
 setlocal nopreviewwindow
 setlocal quoteescape=\\
-setlocal noreadonly
+setlocal readonly
 setlocal norelativenumber
 setlocal norightleft
 setlocal rightleftcmd=search
@@ -419,7 +423,7 @@ if &syntax != 'python'
 setlocal syntax=python
 endif
 setlocal tabstop=4
-setlocal tags=~/picode/fiat-lux/.git/python.tags,~/picode/fiat-lux/.git/tags,./tags,./TAGS,tags,TAGS
+setlocal tags=
 setlocal textwidth=79
 setlocal thesaurus=
 setlocal noundofile
@@ -428,15 +432,17 @@ setlocal nowinfixwidth
 set nowrap
 setlocal nowrap
 setlocal wrapmargin=0
-let s:l = 113 - ((17 * winheight(0) + 17) / 34)
+43
+normal zo
+let s:l = 180 - ((39 * winheight(0) + 23) / 46)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-113
-normal! 08l
+180
+normal! 0
 wincmd w
-exe 'vert 1resize ' . ((&columns * 89 + 89) / 178)
-exe 'vert 2resize ' . ((&columns * 88 + 89) / 178)
+exe 'vert 1resize ' . ((&columns * 89 + 102) / 204)
+exe 'vert 2resize ' . ((&columns * 114 + 102) / 204)
 tabnext 1
 if exists('s:wipebuf')
   silent exe 'bwipe ' . s:wipebuf
