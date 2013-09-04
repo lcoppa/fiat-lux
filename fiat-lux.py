@@ -187,7 +187,7 @@ def main():
                     elif selection == 'service':
                         app.send_service_message()
                     elif selection == 'wink':
-                        # Simulate receipt of a Wink message for testing:
+                        # Simulate receipt of --- a Wink message for testing:
                         app.OnWink.fire(app, None)
                     else:
                         print(
