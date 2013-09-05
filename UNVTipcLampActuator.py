@@ -31,121 +31,213 @@ from pylon.resources.SNVT_xxx import SNVT_xxx
 from pylon.resources.SNVT_count import SNVT_count
 from pylon.resources.SNVT_preset import SNVT_preset
 
+from pylon.resources.SNVT_switch import SNVT_switch
+from pylon.resources.SNVT_switch_2 import SNVT_switch_2
+from pylon.resources.SNVT_color_2 import SNVT_color_2
+from pylon.resources.SNVT_elapsed_tm import SNVT_elapsed_tm
+from pylon.resources.SNVT_elec_kwh import SNVT_elec_kwh
+from pylon.resources.SNVT_occupancy import SNVT_occupancy
+from pylon.resources.SNVT_power import SNVT_power
 
-class SFPTopenLoopSensor(base.Profile):
-    """SFPTopenLoopSensor standard profile.
 
-    Open-Loop Sensor (OLS).
-    A basic object without feedback, used with any form of sensor.
+class UNVTipcLampActuator(base.Profile):
+    """UNVTipcLampActuator custom profile.
+
+    Lamp Actuator.
+    Represents the physical LED in the Pilon examples 
     """
 
     def __init__(self):
         super().__init__(
-            key=1,
+            key=1234,
             scope=0,
             principal='nvoValue'
         )
         self._definition = standard.add(self)
-        self.datapoints['nvoValue'] = base.Profile.DatapointMember(
+        
+        ####################
+        # Profile datapoints
+        ####################
+        
+        # IP-C Lamp Actuator Functional Block based on a new functional profile 
+        # based on the ISI Lamp Actuator with the following changes:
+        # -- An IP-C Switch input and feedback output instead of a SNVT_switch_2    
+        #    input and feedback output.
+        #    The IP-C Switch type is similar to SNVT_switch_2 with the following 
+        #    changes:
+        #   -- A timestamp field specifying the date and time the value was 
+        #      measured or the status was updated.
+        #   -- A new IP-C state enumeration will be defined and used for the 
+        #      state field.
+        #      The type will be based on the switch_state_t enumeration, with 
+        #      changes required for the other changes in this list.
+        #   -- The value field will be defined as a 32-bit float instead of a 
+        #      union.
+        #   -- The group_number, button_number, delay, and multiplier fields 
+        #      will be moved out of the value union into separate fields.
+        #   -- be consolidated into the value field.
+        #   -- A priority field specifying the relative priority of this value.
+        #   -- A status field defined as an enumeration reporting the status of 
+        #      the switch.        
+        self.datapoints['nviValue_2'] = base.Profile.DatapointMember(
             doc="""
-            Value output: Transmits the value from the sensor after conversion
-            to correct units.
+            Description here
             """,
-            name='nvoValue',
+            name='nviValue_2',
             profile=self,
             number=1,
-            datatype=SNVT_xxx,
+            datatype=SNVT_switch_2,
+            mandatory=True,
+            direction=base.Profile.DatapointMember.INPUT
+        )
+        self.datapoints['nvoValueFb_2'] = base.Profile.DatapointMember(
+            doc="""
+            Description here
+            """,
+            name='nvoValueFb_2',
+            profile=self,
+            number=2,
+            datatype=SNVT_switch_2,
             mandatory=True,
             direction=base.Profile.DatapointMember.OUTPUT
         )
-        self.datapoints['nviPresetFb'] = base.Profile.DatapointMember(
+        
+        # -- Power and Energy outputs based on the IP-C Sensor type.
+        self.datapoints['nvoPower'] = base.Profile.DatapointMember(
             doc="""
-            Preset input feedback: Receives preset function feedback
-            information used to synchronize multiple source objects.
+            Description here
             """,
-            name='nviPresetFb',
-            profile=self,
-            number=2,
-            datatype=SNVT_preset,
-            mandatory=False,
-            direction=base.Profile.DatapointMember.INPUT
-        )
-        self.datapoints['nvoRawHwData'] = base.Profile.DatapointMember(
-            doc="""
-            Raw hardware data output: Transmits the value obtained from
-            the sensor prior to any transformation.
-            """,
-            name='nvoRawHwData',
+            name='nvoPower',
             profile=self,
             number=3,
-            datatype=SNVT_count,
-            mandatory=False,
+            datatype=SNVT_power,
+            mandatory=True,
             direction=base.Profile.DatapointMember.OUTPUT
         )
-        self.datapoints['nvoPreset'] = base.Profile.DatapointMember(
+        self.datapoints['nvoEnergyHi'] = base.Profile.DatapointMember(
             doc="""
-            Preset output: Used to program or control the preset of a
-            destination object.
+            Description here
             """,
-            name='nvoPreset',
+            name='nvoEnergyHi',
             profile=self,
             number=4,
-            datatype=SNVT_preset,
-            mandatory=False,
+            datatype=SNVT_elec_kwh,
+            mandatory=True,
             direction=base.Profile.DatapointMember.OUTPUT
         )
-        self.finalize()
-
-
-class SFPTopenLoopActuator(base.Profile):
-    """SFPTopenLoopActuator standard profile.
-
-    Open-Loop Actuator (OLA).
-    A basic object without feedback, used with any form of actuator.
-    """
-
-    def __init__(self):
-        super().__init__(
-            key=3,
-            scope=0,
-            principal='nviValue'
-        )
-        self._definition = standard.add(self)
-        self.datapoints['nviValue'] = base.Profile.DatapointMember(
+        self.datapoints['nvoEnergyLo'] = base.Profile.DatapointMember(
             doc="""
-            Value input: Dictates the desired state of the actuator, determined
-            by the specific application.
+            Description here
             """,
-            name='nviValue',
+            name='nvoEnergyLo',
             profile=self,
-            number=1,
-            datatype=SNVT_xxx,
+            number=5,
+            datatype=SNVT_elec_kwh,
+            mandatory=True,
+            direction=base.Profile.DatapointMember.OUTPUT
+        )
+        
+        # -- Required color input and feedback output instead of optional.
+        self.datapoints['nviColor'] = base.Profile.DatapointMember(
+            doc="""
+            Description here
+            """,
+            name='nviColor',
+            profile=self,
+            number=6,
+            datatype=SNVT_color_2,
             mandatory=True,
             direction=base.Profile.DatapointMember.INPUT
         )
-        self.datapoints['nviPreset'] = base.Profile.DatapointMember(
+        self.datapoints['nvoColorFb'] = base.Profile.DatapointMember(
             doc="""
-            Preset input:   Used to program or control the preset function.
+            Description here
             """,
-            name='nviPreset',
+            name='nvoColorFb',
             profile=self,
-            number=2,
-            datatype=SNVT_preset,
-            mandatory=False,
-            direction=base.Profile.DatapointMember.INPUT
-        )
-        self.datapoints['nvoPresetFb'] = base.Profile.DatapointMember(
-            doc="""
-            Preset feedback output: Transmits the setting associated with the
-            current recalled or programmed preset.
-            """,
-            name='nvoPresetFb',
-            profile=self,
-            number=4,
-            datatype=SNVT_preset,
-            mandatory=False,
+            number=7,
+            datatype=SNVT_color_2,
+            mandatory=True,
             direction=base.Profile.DatapointMember.OUTPUT
         )
-        self.finalize()
 
-# ### TODO REMINDER add properties and remaining optional datapoints
+        # -- Required multiplier output instead of optional.
+        self.datapoints['nvoMultiplierFb'] = base.Profile.DatapointMember(
+            doc="""
+            Description here
+            """,
+            name='nvoMultiplierFb',
+            profile=self,
+            number=8,
+            datatype=SNVT_switch,
+            mandatory=True,
+            direction=base.Profile.DatapointMember.OUTPUT
+        )
+
+        # -- Required runtime output instead of optonal.
+        self.datapoints['nvoRunHours'] = base.Profile.DatapointMember(
+            doc="""
+            Description here
+            """,
+            name='nvoRunHours',
+            profile=self,
+            number=9,
+            datatype=SNVT_elapsed_tm,
+            mandatory=True,
+            direction=base.Profile.DatapointMember.OUTPUT
+        )
+
+        # extra nvs?
+        self.datapoints['nviOccup'] = base.Profile.DatapointMember(
+            doc="""
+            Description here
+            """,
+            name='nviOccup',
+            profile=self,
+            number=10,
+            datatype=SNVT_occupancy,
+            mandatory=True,
+            direction=base.Profile.DatapointMember.INPUT
+        )
+        self.datapoints['nvoOccupancyFb'] = base.Profile.DatapointMember(
+            doc="""
+            Description here
+            """,
+            name='nvoOccupancyFb',
+            profile=self,
+            number=11,
+            datatype=SNVT_occupancy,
+            mandatory=True,
+            direction=base.Profile.DatapointMember.OUTPUT
+        )
+
+        ####################
+        # Profile properties
+        ####################
+
+        # -- A 60-character Name CP instead of three 12-character name CPs.
+        # TODO
+
+        # -- A 60-character Location CP instead of a 31-character location CP.
+        # TODO
+
+        # -- IP-C Network Timing CPs for the power and energy outputs instead of a           
+        #    maximum send time and minimum send time CPs.
+        # TODO
+
+        self.properties['nciNetConfig'] = base.Profile.PropertyMember(
+            doc="""
+            Network configuration source:
+            Indicates whether the node will configure itself, or
+            expects a network manager.
+            """,
+            name='nciNetConfig',
+            profile=self,
+            number=1,
+            datatype=SCPTnwrkCnfg,
+            mandatory=False,
+            flags=base.PropertyFlags.RESET
+        )
+        self.finalize()
+# end class UNVTipcLampActuator
+

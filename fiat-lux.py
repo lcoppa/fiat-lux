@@ -29,14 +29,6 @@ import select
 import pylon.device
 
 # Import Pilon resources used by this application
-# SNVTs
-from pylon.resources.SNVT_switch import SNVT_switch
-from pylon.resources.SNVT_switch_2 import SNVT_switch_2
-from pylon.resources.SNVT_color_2 import SNVT_color_2
-from pylon.resources.SNVT_elapsed_tm import SNVT_elapsed_tm
-from pylon.resources.SNVT_elec_kwh import SNVT_elec_kwh
-from pylon.resources.SNVT_occupancy import SNVT_occupancy
-from pylon.resources.SNVT_power import SNVT_power
 # SFPTs
 from pylon.resources.SFPTopenLoopSensor import SFPTopenLoopSensor
 from pylon.resources.SFPTopenLoopActuator import SFPTopenLoopActuator
