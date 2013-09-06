@@ -216,28 +216,46 @@ class UNVTipcLampActuator(base.Profile):
         ####################
 
         # -- A 60-character Name CP instead of three 12-character name CPs.
-        # TODO
-
-        # -- A 60-character Location CP instead of a 31-character location CP.
-        # TODO
-
-        # -- IP-C Network Timing CPs for the power and energy outputs instead of a           
-        #    maximum send time and minimum send time CPs.
-        # TODO
-
-        self.properties['nciNetConfig'] = base.Profile.PropertyMember(
+        self.properties['nciName'] = base.Profile.PropertyMember(
             doc="""
-            Network configuration source:
-            Indicates whether the node will configure itself, or
-            expects a network manager.
+            Description here
             """,
-            name='nciNetConfig',
+            name='nciName',
             profile=self,
             number=1,
-            datatype=SCPTnwrkCnfg,
+            datatype=UNVTstring, # TODO
+            mandatory=True,
+            flags=base.PropertyFlags.RESET
+        )
+        
+        # -- A 60-character Location CP instead of a 31-character location CP.
+        self.properties['nciLocation'] = base.Profile.PropertyMember(
+            doc="""
+            Description here
+            """,
+            name='nciLocation',
+            profile=self,
+            number=2,
+            datatype=UNVTstring,        # TODO
+            mandatory=True,
+            flags=base.PropertyFlags.RESET
+        )
+        
+        
+        # -- IP-C Network Timing CPs for the power and energy outputs instead 
+        #    of a maximum send time and minimum send time CPs.
+        self.properties['nciNetTiming'] = base.Profile.PropertyMember(
+            doc="""
+            Description here
+            """,
+            name='nciNetTiming',
+            profile=self,
+            number=3,
+            datatype=UNVTNetTiming,     # TODO
             mandatory=False,
             flags=base.PropertyFlags.RESET
         )
+        
         self.finalize()
 # end class UNVTipcLampActuator
 

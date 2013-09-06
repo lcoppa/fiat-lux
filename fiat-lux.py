@@ -24,12 +24,13 @@ import math
 import select
 import sys
 import select
+import sys.time as time
 
 # Import Pilon
 import pylon.device
 
 # Import Pilon resources used by this application
-# SFPTs
+# SFPTs 
 from pylon.resources.SFPTopenLoopSensor import SFPTopenLoopSensor
 from pylon.resources.SFPTopenLoopActuator import SFPTopenLoopActuator
 # SCPTs
@@ -105,13 +106,13 @@ def main():
     ##########
     
     # Create the pressure sensor object
-    mySensor = PRESSURE_SENSOR()    
+    pressure_sensor = PRESSURE_SENSOR()    
 
     # Create the object to control the LEDs. Assume the PWM board for the LEDs
     # is at address 0x40 if not changed in the constants above
     # Chek out the tutorial here
     # learn.adafruit.com/adafruit-16-channel-servo-driver-with-raspberry-pi/
-    myLed = LED(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, True)
+    this_led = LED(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, True)
 
     ################
     # init Pilon app
@@ -153,9 +154,11 @@ def main():
     app.persistence_path = arguments.nvd
     app.programId = arguments.programId
 
+
     ###################################################
     # System event handlers definition and registration
     ###################################################
+
     # noinspection PyUnusedLocal
     def on_service_led(sender, arguments):
         logger.info('Processing service LED status event')
@@ -179,193 +182,65 @@ def main():
         logger.info('Received Offline event')
         print('We are now off line.')
     app.OnOffline += on_offline
-        
-    
-    ###################################
-    # My datapoints
-    ###################################
-    # IP-C Lamp Actuator Functional Block based on a new functional profile 
-    # based on the ISI Lamp Actuator with the following changes:
-    # -- An IP-C Switch input and feedback output instead of a SNVT_switch_2    
-    #    input and feedback output.
-    #    The IP-C Switch type is similar to SNVT_switch_2 with the following 
-    #    changes:
-    #        -- A timestamp field specifying the date and time the value was 
-    #           measured or the status was updated.
-    #        -- A new IP-C state enumeration will be defined and used for the 
-    #           state field.
-    #           The type will be based on the switch_state_t enumeration, with 
-    #           changes required for the other changes in this list.
-    #        -- The value field will be defined as a 32-bit float instead of a 
-    #           union.
-    #        -- The group_number, button_number, delay, and multiplier fields 
-    #           will be moved out of the value union into separate fields.
-    #        -- be consolidated into the value field.
-    #        -- A priority field specifying the relative priority of this value.
-    #        -- A status field defined as an enumeration reporting the status of 
-    #           the switch.
-    nviValue = app.output_datapoint(
-        data=SNVT_switch(), 
-        name='nviValue'
-    )
-    nvoValueFb = app.output_datapoint(
-        data=SNVT_switch(), 
-        name='nvoValueFb'
-    )
-    nviValue_2 = app.input_datapoint(
-        data = SNVT_switch_2(),
-        name = 'nviValue_2'
-    )
-    nvoValueFb_2 = app.output_datapoint(
-        data=SNVT_switch_2(), 
-        name = 'nvoValueFb_2'
-    )
-    
-    # -- Power and Energy outputs based on the IP-C Sensor type.
-    nvoPower = app.output_datapoint(
-        data=SNVT_power(), 
-        name='nvoPower'
-    )
-    nvoEnergyHi = app.output_datapoint(
-        data=SNVT_elec_kwh(), 
-        name='nvoEnergyHi'
-    )
-    nvoEnergyLo = app.output_datapoint(
-        data=SNVT_elec_kwh(), 
-        name='nvoEnergyLo'
-    )
 
-    # -- Required color input and feedback output instead of optional.
-    nviColor = app.input_datapoint(
-        data=SNVT_color_2(), 
-        name='nviColor'
-    )
-    nvoColorFb = app.output_datapoint(
-        data=SNVT_color_2(), 
-        name='nvoColorFb'
-    )
-
-    # -- Required multiplier output instead of optional.
-    nvoMultiplierFb = app.output_datapoint(
-        data=SNVT_switch(), 
-        name='nvoMultiplierFb'
-    )
-
-    # -- Required runtime output instead of optonal.
-    nvoRunHours = app.output_datapoint(
-        data=SNVT_elapsed_tm(), 
-        name='nvoRunHours'
-    )
-
-    # extra nvs?
-    nviOccup = app.input_datapoint(
-        data=SNVT_occupancy(), 
-        name='nviOccup'
-    )
-    nvoOccupancyFb = app.output_datapoint(
-        data=SNVT_occupancy(), 
-        name='nvoOccupancyFb'
-    )
-
-    ###################
+    #####################
     # (Functional) blocks
-    ###################
+    #####################
     # Remember, all the blocks implement the mandatory nvs automatically
 
     # the pressure sensor
-    pressure_sensor_block = app.block(
-        profile = SFPTopenLoopSensor(),
-        ext_name = 'FPPressureSensor',
+    # pressure_sensor_block = app.block(
+    #     profile = SFPTopenLoopSensor(),
+    #     ext_name = 'FPPressureSensor',
+    #     snvt_xxx = SNVT_switch
+    # )
+
+    # the red LED light
+    led_red_light_block = app.block(
+        profile = SFPTopenLoopActuator(),
+        ext_name = 'FPRedLedLight',
         snvt_xxx = SNVT_switch
     )
-
-    # the RGB LED light
-    led_light_block = app.block(
-        profile = UNVTipcLampActuator(),
-        ext_name = 'FPLedLight',
-        # no need for snvt_xxx
-    )
-
-    #############################
-    # Create my device properties
-    #############################
-
-    # -- A 60-character Name CP instead of three 12-character name CPs.
-    # TODO
-
-    # -- A 60-character Location CP instead of a 31-character location CP.
-    # TODO
-
-    # -- IP-C Network Timing CPs for the power and energy outputs instead of a           
-    #    maximum send time and minimum send time CPs.
-    # TODO
-
-
-
-
-
-
 
     ##################################
     # Input NVs updates event handlers
     ##################################
 
-    def on_nvi_value_update(sender, arguments):
+    def on_led_red_nvi_value_update(sender, arguments):
         logger.info('Processing network variable update {0}'.format(sender))
         try:
-            with nviValue, nvoValueFb: 
-                # TODO
-                    # turn leds on/off
+            with led_red_light_block.nviValue: 
+                # turn leds on/off
+                this_led.set_led_level(
+                    RED_LED_PWM_CHANNEL, 
+                    led_red_light_block.nviValue.data.value)
                 # propagate feedback
-                nvoValueFb.data = nviValue.data
                 print("LED has now value {0}, state {1}".format(
-                      nvoValueFb.data.value, nvoValueFb.data.state)
-                )
+                      led_red_light_block.nviValue.data.value, 
+                      led_red_light_block.nviValue.data.state))
         except Exception as e:
-            print('Something just went wrong in on_nvi_value_update({0}):' \
+            print('Something just went wrong in on_led_red_nvi_value_update({0}):' \
                   '{1}'.format(sender, e))
-    nviValue.OnUpdate += on_nvi_occup_update
+    led_red_light_block.nviValue.OnUpdate += on_led_red_nvi_value_update
 
-    def on_nvi_occup_update(sender, arguments):
-        logger.info('Processing network variable update {0}'.format(sender))
-        try:
-            with:
-                # TODO
-                print()
-        except Exception as e:
-            print('Something just went wrong in on_nvi_occup_update({0}):' \
-                  '{1}'.format(sender, e)
-            )
-    nviOccup.OnUpdate += on_nvi_color_update
-
-    def on_nvi_color_update(sender, arguments):
-        logger.info('Processing network variable update {0}'.format(sender))
-        try:
-            with:
-                # TODO
-                print()
-        except Exception as e:
-            print('Something just went wrong in ' \
-                  'on_nvi_color_update({0}): {1}'.format(sender, e)
-            )
-    nviColor.OnUpdate += on_nvi_color_update
-
-
-
-
-
-
-
-
-    ###############################################################################
-    #   Start and main loop
-    ###############################################################################
+    ###########################################################################
+    # Start and main loop
+    ###########################################################################
     app.start()
     app.sendServicePin()
 
     print("...init done.")
-    print("Press the sensor to regulate only LED dimming; control color and also " \
-          "dimming via the network.")
+    print(
+        'The script is now running as {0},\n'
+        'using non-volatile data from {1} and\n'
+        'a unique Id (hardware address) of {2}'.format(
+            app.programId,
+            app.persistence_path,
+            app.uniqueId
+        )
+    )
+    print("Press the sensor to regulate LED dimming only;") 
+    print("control both color and dimming via the network.")
     print("CTRL-c to exit")
 
 
@@ -374,7 +249,7 @@ def main():
             app.service()
 
             # read pressure value
-            pressure = mySensor.read_pressure(PRESSURE_SENSOR_PIN)
+            pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
             # start by dimming down (if possible)
             dimming_down = True
 
@@ -383,43 +258,34 @@ def main():
             # TODO: make dimming proportional to pressure level
             while pressure < PRESSURE_DIMMING_THRESHOLD:
                 # read current dimming level for RGB LED as percentages
-                # r_dimming_level = ...
+                r_dimming_level = led_red_light_block.nviValue.data.value
                 # g_dimming_level = ...
                 # b_dimming_level = ...
 
-                ## reduce dimming evenly until one color is zero, then back up
-                # if all colors can be dimmed
-                if ((r_dimming_level > 0 and r_dimming_level < 100) and
-                    (g_dimming_level > 0 and g_dimming_level < 100) and
-                    (b_dimming_level > 0 and b_dimming_level < 100)):
+                ## reduce dimming until color is zero, then back up
+                if r_dimming_level > 0 and r_dimming_level < 100:
                     # down
                     if dimming_down:
                         r_dimming_level -= 1
-                        g_dimming_level -= 1
-                        b_dimming_level -= 1
                     # or up
                     else:
                         r_dimming_level += 1
-                        g_dimming_level += 1
-                        b_dimming_level += 1
                     # do it
-                    myLed.set_led_level(RED_LED_PWM_CHANNEL, r_dimming_level)
-                    myLed.set_led_level(GREEN_LED_PWM_CHANNEL, g_dimming_level)
-                    myLed.set_led_level(BLUE_LED_PWM_CHANNEL, b_dimming_level)
-                # if dimming reached the limits, invert the dimming direction
-                if (r_dimming_level = 0 or g_dimming_level = 0 or
-                    b_dimming_level = 0):
+                    this_led.set_led_level(RED_LED_PWM_CHANNEL, 
+                                           r_dimming_level)
+                    time.sleep(0.2)
+
+                # when reach the bottom start dimming up again
+                if r_dimming_level == 0:
                     dimming_down = False
-                else if (r_dimming_level = 100 or g_dimming_level = 100 or
-                         b_dimming_level = 100):
+                    r_dimming_level = 1
+                # when reach the top start dimming down again
+                elif r_dimming_level == 100:
                     dimming_down = True
+                    r_dimming_level = 99
 
                 # update the corresponding NV
-                # ... = r_dimming_level
-                # ... = g_dimming_level
-                # ... = b_dimming_level
-
-
+                # led_red_light_block = r_dimming_level
 
             #pdb.set_trace()
     except KeyboardInterrupt:
@@ -441,7 +307,8 @@ def this_pi_ip_addr():
         # get text hostname of the local machine
         host = socket.gethostname()
         
-        # get the numeric IP address from the hostname; this might require avahid
+        # get the numeric IP address from the hostname;
+        # this might require avahid
         ip_address = socket.gethostbyname(host + '.local')
         print('Host ' + host + ' has IP address '+ ip_address)
 
