@@ -9,7 +9,7 @@
 # www.echelon.com/license/examplesoftware/.
 #
 
-from Adafruit_PWM_Servo_Driver import PWM
+from .Adafruit_PWM_Servo_Driver import PWM
 
 class LED:
     _pwm = None

@@ -20,7 +20,7 @@
 # Import standard Python modules used here
 import argparse
 import logging
-import sys.time as time
+import time
 import socket
 
 # Import Pilon
@@ -30,7 +30,7 @@ import pylon.device
 # SNVTs
 from pylon.resources.SNVT_switch import SNVT_switch
 # SFPTs
-#from pylon.resources.SFPTopenLoopSensor import SFPTopenLoopSensor
+from pylon.resources.SFPTopenLoopSensor import SFPTopenLoopSensor
 from pylon.resources.SFPTopenLoopActuator import SFPTopenLoopActuator
 # SCPTs
 #from pylon.resources.SCPTnwrkCnfg import SCPTnwrkCnfg
@@ -104,14 +104,29 @@ def main():
     # init I/O
     ##########
 
-    # Create the pressure sensor object
-    pressure_sensor = PRESSURE_SENSOR()
+    # Set to True if using thePi standalone with no LED or sensor
+    with_hw_periferals = False
 
-    # Create the object to control the LEDs. Assume the PWM board for the LEDs
-    # is at address 0x40 if not changed in the constants above
-    # Chek out the tutorial here
-    # learn.adafruit.com/adafruit-16-channel-servo-driver-with-raspberry-pi/
-    this_led = LED(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, True)
+    # create the hw I/O
+    if with_hw_periferals:
+
+        # Create the pressure sensor object
+        try:
+            pressure_sensor = PRESSURE_SENSOR()
+        except Exception as e:
+            print("Cannot find the pressure sensor.")
+            print(e)
+
+        # Create the object to control the LEDs. Assume the PWM board for the LEDs
+        # is at address 0x40 if not changed in the constants above
+        # Chek out the tutorial here
+        # learn.adafruit.com/adafruit-16-channel-servo-driver-with-raspberry-pi/
+        try:
+            this_led = LED(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, True)
+            pass
+        except Exception as e:
+            print("Cannot find the LED light.")
+            print(e)
 
     ################
     # init Pilon app
@@ -187,18 +202,32 @@ def main():
     # Remember, all the blocks implement the mandatory nvs automatically
 
     # the pressure sensor
-    # pressure_sensor_block = app.block(
-    #     profile = SFPTopenLoopSensor(),
-    #     ext_name = 'FPPressureSensor',
-    #     snvt_xxx = SNVT_switch
-    # )
+    pressure_sensor_block = app.block(
+         profile = SFPTopenLoopSensor(),
+         ext_name = 'FPPressureSensor',
+         snvt_xxx = SNVT_switch
+     )
 
-    # the red LED light
-    led_red_light_block = app.block(
-        profile = SFPTopenLoopActuator(),
-        ext_name = 'FPRedLedLight',
-        snvt_xxx = SNVT_switch
-    )
+    # create the new IoT Lamp block if using real hw periferals
+    if with_hw_periferals:
+        led_rgb_light_block = app.block(
+            profile = SFPTiotLamp(),
+            ext_name = 'FPIoTLamp',
+        )
+    # if not, use fake blocks for testing
+    else:
+        # the red LED light
+        led_red_light_block = app.block(
+            profile = SFPTopenLoopActuator(),
+            ext_name = 'FPRedLedLight',
+            snvt_xxx = SNVT_switch
+        )
+        # the red LED light feedback
+        led_red_light_block_fb = app.block(
+            profile = SFPTopenLoopActuator(),
+            ext_name = 'FPRedLedLightFb',
+            snvt_xxx = SNVT_switch
+        )
 
     ##################################
     # Input NVs updates event handlers
@@ -208,14 +237,21 @@ def main():
         logger.info('Processing network variable update {0}'.format(sender))
         try:
             with led_red_light_block.nviValue:
-                # turn leds on/off
-                this_led.set_led_level(
-                    RED_LED_PWM_CHANNEL,
-                    led_red_light_block.nviValue.data.value)
-                # propagate feedback
+                # check if we have real leds to control
+                if with_hw_periferals:
+                    # turn leds on/off
+                    this_led.set_led_level(
+                        RED_LED_PWM_CHANNEL,
+                        led_red_light_block.nviValue.data.value)
+                    # propagate
+                    # led_fb = ...
+                else:
+                    # only propagate fake feedback
+                    led_red_light_block_fb.nviValue.data = \
+                        led_red_light_block.nviValue.data
                 print("LED has now value {0}, state {1}".format(
-                      led_red_light_block.nviValue.data.value,
-                      led_red_light_block.nviValue.data.state))
+                      led_red_light_block_fb.nviValue.data.value,
+                      led_red_light_block_fb.nviValue.data.state))
         except Exception as e:
             print('Something just went wrong in on_led_red_nvi_value_update({0}):' \
                   '{1}'.format(sender, e))
@@ -225,7 +261,7 @@ def main():
     # Start and main loop
     ###########################################################################
     app.start()
-    app.sendServicePin()
+    app.send_service_message()
 
     print("...init done.")
     print(
@@ -247,7 +283,7 @@ def main():
             app.service()
 
             # read pressure value
-            pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
+            pressure = 2001 #pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
             # start by dimming down (if possible)
             dimming_down = True
 
@@ -260,7 +296,7 @@ def main():
                 # g_dimming_level = ...
                 # b_dimming_level = ...
 
-                ## reduce dimming until color is zero, then back up
+                # reduce dimming until color is zero, then back up
                 if r_dimming_level > 0 and r_dimming_level < 100:
                     # down
                     if dimming_down:
@@ -269,8 +305,8 @@ def main():
                     else:
                         r_dimming_level += 1
                     # do it
-                    this_led.set_led_level(RED_LED_PWM_CHANNEL,
-                                           r_dimming_level)
+                    #this_led.set_led_level(RED_LED_PWM_CHANNEL,
+                    #                       r_dimming_level)
                     time.sleep(0.2)
 
                 # when reach the bottom start dimming up again
@@ -287,8 +323,8 @@ def main():
 
             #pdb.set_trace()
     except KeyboardInterrupt:
-        # TODO: clean up I/O
-        pass
+        # close GPIO cleanly
+        pressure_sensor.cleanup()
 
     finally:
         app.stop()
