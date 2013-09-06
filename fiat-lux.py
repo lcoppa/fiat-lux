@@ -20,23 +20,22 @@
 # Import standard Python modules used here
 import argparse
 import logging
-import math
-import select
-import sys
-import select
 import sys.time as time
+import socket
 
 # Import Pilon
 import pylon.device
 
 # Import Pilon resources used by this application
-# SFPTs 
-from pylon.resources.SFPTopenLoopSensor import SFPTopenLoopSensor
+# SNVTs
+from pylon.resources.SNVT_switch import SNVT_switch
+# SFPTs
+#from pylon.resources.SFPTopenLoopSensor import SFPTopenLoopSensor
 from pylon.resources.SFPTopenLoopActuator import SFPTopenLoopActuator
 # SCPTs
-from pylon.resources.SCPTnwrkCnfg import SCPTnwrkCnfg
-from pylon.resources.SCPTmaxSndT import SCPTmaxSndT
-from pylon.resources.SCPTdefOutput import SCPTdefOutput
+#from pylon.resources.SCPTnwrkCnfg import SCPTnwrkCnfg
+#from pylon.resources.SCPTmaxSndT import SCPTmaxSndT
+#from pylon.resources.SCPTdefOutput import SCPTdefOutput
 
 # Import for I/O
 from led_driver.led_set import LED
@@ -57,7 +56,7 @@ BLU_LED_PWM_CHANNEL = 2                 # used by the LED object
 ###############################################################################
 def main():
     """The script's main function"""
-    
+
     print('Welcome to the FiatLux Application.')
     print('Type CTRL-c to exit.')
     print('Initialising...')
@@ -65,7 +64,7 @@ def main():
     ############################
     # Get command line arguments
     ############################
-    
+
     # define the command line arguments, with defaults and help
     parser = argparse.ArgumentParser(
         description="The Pilon LED demo script"
@@ -104,9 +103,9 @@ def main():
     ##########
     # init I/O
     ##########
-    
+
     # Create the pressure sensor object
-    pressure_sensor = PRESSURE_SENSOR()    
+    pressure_sensor = PRESSURE_SENSOR()
 
     # Create the object to control the LEDs. Assume the PWM board for the LEDs
     # is at address 0x40 if not changed in the constants above
@@ -121,17 +120,16 @@ def main():
     #
     # Enable/disable test mode
     #
-    
+
     # let's run plain this time
     pylon.device.stack.test_mode = False
-    unit_test = False
     if pylon.device.stack.test_mode:
         print('\n*** This application is running in test mode ***\n')
-    
+
     #
     # create and configure application object
     #
-    
+
     # set app object properties
     app = pylon.device.application.Application(
         use_isi=True,
@@ -209,14 +207,14 @@ def main():
     def on_led_red_nvi_value_update(sender, arguments):
         logger.info('Processing network variable update {0}'.format(sender))
         try:
-            with led_red_light_block.nviValue: 
+            with led_red_light_block.nviValue:
                 # turn leds on/off
                 this_led.set_led_level(
-                    RED_LED_PWM_CHANNEL, 
+                    RED_LED_PWM_CHANNEL,
                     led_red_light_block.nviValue.data.value)
                 # propagate feedback
                 print("LED has now value {0}, state {1}".format(
-                      led_red_light_block.nviValue.data.value, 
+                      led_red_light_block.nviValue.data.value,
                       led_red_light_block.nviValue.data.state))
         except Exception as e:
             print('Something just went wrong in on_led_red_nvi_value_update({0}):' \
@@ -239,7 +237,7 @@ def main():
             app.uniqueId
         )
     )
-    print("Press the sensor to regulate LED dimming only;") 
+    print("Press the sensor to regulate LED dimming only;")
     print("control both color and dimming via the network.")
     print("CTRL-c to exit")
 
@@ -271,7 +269,7 @@ def main():
                     else:
                         r_dimming_level += 1
                     # do it
-                    this_led.set_led_level(RED_LED_PWM_CHANNEL, 
+                    this_led.set_led_level(RED_LED_PWM_CHANNEL,
                                            r_dimming_level)
                     time.sleep(0.2)
 
@@ -290,7 +288,7 @@ def main():
             #pdb.set_trace()
     except KeyboardInterrupt:
         # TODO: clean up I/O
-
+        pass
 
     finally:
         app.stop()
@@ -306,7 +304,7 @@ def this_pi_ip_addr():
     try:
         # get text hostname of the local machine
         host = socket.gethostname()
-        
+
         # get the numeric IP address from the hostname;
         # this might require avahid
         ip_address = socket.gethostbyname(host + '.local')
@@ -316,7 +314,7 @@ def this_pi_ip_addr():
 
     except Exception as e:
         print("Can't get IP address")
-
+        print(e)
 ### end this_pi_ip_addr function ###
 
 if __name__ == '__main__':
