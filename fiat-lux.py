@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 -tt
+#!/usr/bin/env python3
 
 """ Pilon application
     Controls RGB LEDs via network variables (color and brightness) and
@@ -57,9 +57,9 @@ BLU_LED_PWM_CHANNEL = 2                 # used by the LED object
 def main():
     """The script's main function"""
 
-    print('Welcome to the FiatLux Application.')
-    print('Type CTRL-c to exit.')
-    print('Initialising...')
+    print('Welcome to the Pilon FiatLux Application.')
+    print('\n'
+          'Initialising...')
 
     ############################
     # Get command line arguments
@@ -263,19 +263,22 @@ def main():
     app.start()
     app.send_service_message()
 
-    print("...init done.")
     print(
-        'The script is now running as {0},\n'
-        'using non-volatile data from {1} and\n'
-        'a unique Id (hardware address) of {2}'.format(
+        'The script is now running as "{0}",\n'
+        'using non-volatile data from "{1}" and\n'
+        'a unique Id (hardware address) of "{2}"'.format(
             app.programId,
             app.persistence_path,
             app.uniqueId
         )
     )
-    print("Press the sensor to regulate LED dimming only;")
-    print("control both color and dimming via the network.")
-    print("CTRL-c to exit")
+    print('...done.')
+    print('\n'
+          'Press the sensor to regulate LED dimming only;\n'
+          'control both color and dimming via the network.\n'
+          '\n'
+          'Type CTRL-c to exit.'
+    )
 
 
     try:
@@ -324,9 +327,12 @@ def main():
             #pdb.set_trace()
     except KeyboardInterrupt:
         # close GPIO cleanly
-        pressure_sensor.cleanup()
+        if with_hw_periferals:
+            pressure_sensor.cleanup()
 
     finally:
+        print("\n\n"
+            "Winding down...")
         app.stop()
         print("Goodbye")
 

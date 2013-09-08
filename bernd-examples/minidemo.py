@@ -141,6 +141,7 @@ def main():
     try:
         done = False
 
+        print('>')
         while not done:
 
             #
@@ -168,6 +169,7 @@ def main():
                         print(
                             'Valid commands are "exit", "service", "wink"'
                         )
+                        print('>')
                 except Exception as e:
                     print(e)
     finally:
