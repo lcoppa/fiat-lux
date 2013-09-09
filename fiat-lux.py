@@ -32,6 +32,7 @@ from pylon.resources.SNVT_switch import SNVT_switch
 # SFPTs
 from pylon.resources.SFPTopenLoopSensor import SFPTopenLoopSensor
 from pylon.resources.SFPTopenLoopActuator import SFPTopenLoopActuator
+#from pylon.resources.SFPTisiLampActuator import SFPTisiLampActuator
 # SCPTs
 #from pylon.resources.SCPTnwrkCnfg import SCPTnwrkCnfg
 #from pylon.resources.SCPTmaxSndT import SCPTmaxSndT
@@ -147,7 +148,7 @@ def main():
 
     # set app object properties
     app = pylon.device.application.Application(
-        use_isi=True,
+        use_isi=False,
         log_file=arguments.log + '-rtk.log',
         log_level=logging.DEBUG if arguments.debug else logging.ERROR
     )
@@ -211,7 +212,7 @@ def main():
     # create the new IoT Lamp block if using real hw periferals
     if with_hw_periferals:
         led_rgb_light_block = app.block(
-            profile = SFPTiotLamp(),
+            profile = SFPTisiLampActuator(),
             ext_name = 'FPIoTLamp',
         )
     # if not, use fake blocks for testing
