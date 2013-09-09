@@ -1,123 +1,83 @@
-"""
-    SNVT_preset
-"""
+"""SNVT_preset standard datapoint type, originally defined in resource file
+set standard 00:00:00:00:00:00:00:00-0.  """
 
-#
+
 # Copyright (C) 2013 Echelon Corporation.  All Rights Reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
+
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software" to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+# This file is generated from device resource files using an automated
+# database to source code conversion process.  Grammar and punctuation within
+# the embedded documentation may not be correct, as this data is gathered and
+# combined from several sources.  The machine-generated code may not meet
+# compliance with PEP-8 and PEP-257 recommendations at all times.
+# Generated at 06-Sep-2013 08:58.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
-
 from pylon.resources.learn_mode_t import learn_mode_t
 
 
 class SNVT_preset(base.Structure):
-    """SNVT_preset standard datapoint type.
+    """SNVT_preset standard datapoint type.  Preset (mode, data, time.)."""
 
-    Preset  (mode, data, time).
-
-    Network variables of SNVT_preset type are used to allow a sensor or
-    actuator functional block to control and adopt one of several programmable
-    values and ramp rates, in addition to the normal control mode. For a usage
-    example, see the definition for the Closed Loop Sensor
-    (SFPTclosedLoopSensor).
-    To program a preset, the SNVT_preset output is transmitted from a sensor
-    with updated values for SNVT_preset.value, SNVT_preset.selector, and the
-    time-related fields. In addition, SNVT_preset.learn is set to
-    LN_LEARN_VALUE —or alternatively set to LN_LEARN_CURRENT, which causes the
-    receiving actuator to learn whatever its current value is. A pre-programmed
-    preset can be selected by transmitting the SNVT_preset output with the
-    relevant preset number set in SNVT_preset.selector, and with SNVT_preset.
-    learn set to LN_RECALL.
-    The time-related fields specify the time period over which the actuator
-    should progress from the current level to the newly selected preset level.
-    A benefit of this mechanism is that any set of actuators that are preset
-    with a common rate value for a particular preset number, will all arrive at
-    this new value at the same time, regardless of the individual preset values
-    to which they ramp.
-    """
-
-    def __init__(self,
-                 learn=learn_mode_t.LN_NUL,
-                 selector=0,
-                 value=(0, 0, 0, 0),
-                 day=0,
-                 hour=0,
-                 minute=0,
-                 second=0,
-                 millisecond=0):
+    def __init__(self):
         super().__init__(
             key=94,
             scope=0
         )
-        self._definition = standard.add(self)
 
-        self.__learn = learn_mode_t(learn)
+        self.__learn = learn_mode_t(
+        )
         self._register(('learn', self.__learn))
 
         self.__selector = base.Scaled(
             size=2,
             signed=False,
-            default=selector,
+            minimum=0,
+            maximum=65535
         )
         self._register(('selector', self.__selector))
 
         self.__value = base.Array(
-            elements=(
+            [
                 base.Scaled(
                     size=1,
                     signed=False,
-                    default=value[0]
-                ),
-                base.Scaled(
-                    size=1,
-                    signed=False,
-                    default=value[1]
-                ),
-                base.Scaled(
-                    size=1,
-                    signed=False,
-                    default=value[2]
-                ),
-                base.Scaled(
-                    size=1,
-                    signed=False,
-                    default=value[3]
-                )
-            )
+                    minimum=0,
+                    maximum=255
+                ) for i in range(4)
+            ]
         )
         self._register(('value', self.__value))
 
         self.__day = base.Scaled(
             size=2,
             signed=False,
-            default=day
+            invalid=65535,
+            minimum=0,
+            maximum=65535
         )
         self._register(('day', self.__day))
 
         self.__hour = base.Scaled(
             size=1,
             signed=False,
-            default=hour,
+            minimum=0,
             maximum=23
         )
         self._register(('hour', self.__hour))
@@ -125,7 +85,7 @@ class SNVT_preset(base.Structure):
         self.__minute = base.Scaled(
             size=1,
             signed=False,
-            default=minute,
+            minimum=0,
             maximum=59
         )
         self._register(('minute', self.__minute))
@@ -133,7 +93,7 @@ class SNVT_preset(base.Structure):
         self.__second = base.Scaled(
             size=1,
             signed=False,
-            default=second,
+            minimum=0,
             maximum=59
         )
         self._register(('second', self.__second))
@@ -141,10 +101,12 @@ class SNVT_preset(base.Structure):
         self.__millisecond = base.Scaled(
             size=2,
             signed=False,
-            default=millisecond,
+            minimum=0,
             maximum=999
         )
         self._register(('millisecond', self.__millisecond))
+        self._definition = standard.add(self)
+
 
     def __set_learn(self, v):
         self.__learn._value = v
@@ -152,9 +114,8 @@ class SNVT_preset(base.Structure):
     learn = property(
         lambda self: self.__learn._value,
         __set_learn,
-        None, """
-        Learn mode  (learn mode names).
-        """
+        None,
+        """Learn mode.  (learn mode names.)."""
     )
 
     def __set_selector(self, v):
@@ -163,10 +124,9 @@ class SNVT_preset(base.Structure):
     selector = property(
         lambda self: self.__selector._value,
         __set_selector,
-        None, """
-        Selector  (16-bit unsigned value).  The selector is used to choose
-        which preset.
-        """
+        None,
+        """Selector The selector is used to choose which preset.  (16-bit
+        unsigned value.)."""
     )
 
     def __set_value(self, v):
@@ -175,9 +135,8 @@ class SNVT_preset(base.Structure):
     value = property(
         lambda self: self.__value._value,
         __set_value,
-        None, """
-        Value  (array of 4 bytes).
-        """
+        None,
+        """Value (array of 4 bytes.)."""
     )
 
     def __set_day(self, v):
@@ -186,9 +145,9 @@ class SNVT_preset(base.Structure):
     day = property(
         lambda self: self.__day._value,
         __set_day,
-        None, """
-        Days  (days).  The value 65535 represents NULL or unknown elapsed time.
-        """
+        None,
+        """Days The value 65535 represents NULL or unknown elapsed time.
+        (days)."""
     )
 
     def __set_hour(self, v):
@@ -197,9 +156,8 @@ class SNVT_preset(base.Structure):
     hour = property(
         lambda self: self.__hour._value,
         __set_hour,
-        None, """
-        Hours  (hours).  This field uses a 24-hour value.
-        """
+        None,
+        """Hours This field uses a 24-hour value.  (hours)."""
     )
 
     def __set_minute(self, v):
@@ -208,9 +166,8 @@ class SNVT_preset(base.Structure):
     minute = property(
         lambda self: self.__minute._value,
         __set_minute,
-        None, """
-        Minutes  (minutes).
-        """
+        None,
+        """Minutes (minutes)."""
     )
 
     def __set_second(self, v):
@@ -219,9 +176,8 @@ class SNVT_preset(base.Structure):
     second = property(
         lambda self: self.__second._value,
         __set_second,
-        None, """
-        Seconds  (seconds).
-        """
+        None,
+        """Seconds (seconds)."""
     )
 
     def __set_millisecond(self, v):
@@ -230,16 +186,18 @@ class SNVT_preset(base.Structure):
     millisecond = property(
         lambda self: self.__millisecond._value,
         __set_millisecond,
-        None, """
-        Milliseconds  (milliseconds).
-        """
+        None,
+        """Milliseconds (milliseconds)."""
     )
 
     def __set(self, v):
-        if not isinstance(v, SNVT_preset):
-            raise TypeError('Expected instance of SNVT_preset, got {0}'.format(
-                type(v)
-            ))
+        if not isinstance(v, type(self)):
+            raise TypeError(
+                'Expected instance of {0}, got {1}'.format(
+                    type(self),
+                    type(v)
+                )
+            )
         self.__set_learn(v.__learn)
         self.__set_selector(v.__selector)
         self.__set_value(v.__value)
@@ -252,5 +210,11 @@ class SNVT_preset(base.Structure):
     _value = property(lambda self: self, __set)
 
     def __len__(self):
-        """Returns the length of the data type, in bytes."""
+        """Return the length of the type, in bytes."""
         return 14
+
+
+if __name__ == '__main__':
+    # unit test code.
+    item = SNVT_preset()
+    pass
