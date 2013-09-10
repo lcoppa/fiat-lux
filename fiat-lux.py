@@ -32,7 +32,7 @@ from pylon.resources.SNVT_switch import SNVT_switch
 #from pylon.resources.SCPTnwrkCnfg import SCPTnwrkCnfg
 #from pylon.resources.SCPTmaxSndT import SCPTmaxSndT
 #from pylon.resources.SCPTdefOutput import SCPTdefOutput
-from pulon.resources.color_encoding_t import color_encoding_t
+from pylon.resources.color_encoding_t import color_encoding_t
 
 # IP-C profiles used by this application
 from pylon.resources.UFPTiotAnalogInput import UFPTiotAnalogInput
@@ -53,7 +53,8 @@ PWM_BOARD_I2C_ADDRESS = 0x40            # Used by the LED object
 PWM_FREQ = 1000                         # In Hz, used by the LED object
 RED_LED_PWM_CHANNEL = 0                 # Used by the LED object
 GREEN_LED_PWM_CHANNEL = 1               # Used by the LED object
-BLUE_LED_PWM_CHANNEL = 2                # Used by  the LED object
+BLUE_LED_PWM_CHANNEL = 2                # Used by the LED object
+LED_OFFSET = 3                          # Used by the LED object
 
 ################################################W############################
 # Main function
@@ -104,7 +105,7 @@ def main():
         help='Path to non-volatile data storage (folder)')
     parser.add_argument(
         '-p', '--programId',
-        default='9F:FF:FF:00:00:00:9A:03',
+        default='9F:FF:FF:00:00:00:9A:04',
         help='The colon-separated program ID')
     parser.add_argument(
         '-s', '--sensor',
@@ -211,17 +212,17 @@ def main():
     # LED block
     if not arguments.legacy:
         # Create the LED block using the new IoT Load Control block
-        led_iot_block = app.block(
+        led_iot_block = tuple(app.block(
             profile = UFPTiotLoad(),
-            ext_name = 'Color Lamp')
+            ext_name = 'Color Lamp') for i in range(4))
         # Create the power monitor block
-        power_monitor_iot_block = app.block(
+        power_monitor_iot_block = tuple(app.block(
             profile = UFPTiotAnalogInput(),
-            ext_name = 'Lamp Power Monitor')
+            ext_name = 'Lamp Power Monitor') for i in range(4))
         # Create the energy monitor block
-        energy_monitor_iot_block = app.block(
+        energy_monitor_iot_block = tuple(app.block(
             profile = UFPTiotAnalogInput(),
-            ext_name = 'Lamp Energy Monitor')
+            ext_name = 'Lamp Energy Monitor') for i in range(4))
     else:
         # Create functional blocks based on legacy profiles
         # Use our RGB LED as a standard white light
@@ -246,43 +247,45 @@ def main():
         def on_led_nvi_load_control_update(sender, event_data):
             logger.info('Processing network variable update '
                         ' {0}'.format(sender))
+            print('Block index {0}'.format(sender.index))
 
             # Require RBG encoding (for now)
-            if (not led_iot_block.nviLoadControl.data.color.encoding == 
+            if (not sender.data.color.encoding ==
                 color_encoding_t.COLOR_RGB):
                 print("Use RGB encoding only in nviLoadControl")
                 return
 
-            try:    
-                with led_iot_block.nviLoadControl:
+            try:
+                with sender:
                     # Act on input
                     if arguments.color:
                         # Real LEDs available -- turn them on or off
                         this_led.set_led_level(
-                            RED_LED_PWM_CHANNEL,
-                            led_iot_block.nviLoadControl.data.color_value.RGB.red)
+                            RED_LED_PWM_CHANNEL + (sender.index * LED_OFFSET),
+                            sender.data.color.color_value.RGB.red)
                         this_led.set_led_level(
-                            GREEN_LED_PWM_CHANNEL,
-                            led_iot_block.nviLoadControl.data.color_value.RGB.green)
+                            GREEN_LED_PWM_CHANNEL + (sender.index * LED_OFFSET),
+                            sender.data.color.color_value.RGB.green)
                         this_led.set_led_level(
-                            BLUE_LED_PWM_CHANNEL,
-                            led_iot_block.nviLoadControl.data.color_value.RGB.blue)
+                            BLUE_LED_PWM_CHANNEL + (sender.index * LED_OFFSET),
+                            sender.data.color.color_value.RGB.blue)
                     # Send feedback
-                    # TODO: process the input before sending instead of 
+                    # TODO: process the input before sending instead of
                     # sending it as feedback
-                    led_iot_block.nvoLoadStatus.data = \
-                    led_iot_block.nviLoadControl.data
-                    print("LED input is control {0}, state {1}, "
-                          "level {2}".format(
-                          led_iot_block.nviLoadControl.data.control,
-                          led_iot_block.nviLoadControl.data.state,
-                          led_iot_block.nviLoadControl.data.level))
+                    # led_iot_block.nvoLoadStatus.data = \
+                    # led_iot_block.nviLoadControl.data
+                    print("LED {0} input is control {1}, state {2}, "
+                          "level {3}".format(i,
+                          sender.data.control,
+                          sender.data.state,
+                          sender.data.level))
             except Exception as e:
                 print('Something just went wrong when updating RGB values '
-                      'in on_led_nvi_load_control_update({0}):' 
+                      'in on_led_nvi_load_control_update({0}):'
                       '{1}'.format(sender, e))
         # Create the on update handler for the nviValue input
-        led_iot_block.nviLoadControl.OnUpdate += \
+        for i in range(0, 4):
+            led_iot_block[i].nviLoadControl.OnUpdate += \
         on_led_nvi_load_control_update
 
     # Define the on update handler for the Actuator nviValue input
@@ -290,6 +293,7 @@ def main():
         def on_legacy_led_nvi_value_update(sender, event_data):
             logger.info('Processing network variable update'
                         ' {0}'.format(sender))
+
             try:
                 with led_legacy_block.nviValue:
                     if arguments.color:
@@ -298,9 +302,9 @@ def main():
                         # i.e. set same brightness to all colors
                         
                         # check data point state field first
-                        if led_legacy_block.nviValue.data.state == 1
+                        if led_legacy_block.nviValue.data.state == 1:
                             brightness = led_legacy_block.nviValue.data.value
-                        else 
+                        else:
                             brightness = 0
                         
                         # set the new brightness
@@ -349,7 +353,7 @@ def main():
                 app.persistence_path,
                 app.uniqueId))
 
-    # Display instructions    
+    # Display instructions
     if arguments.color:
         print("Color LED hardware enabled.")
     else:
@@ -382,12 +386,15 @@ def main():
             #
             #   Interactive user input
             #
+            
+            # prompt
+            sys.stdout.write(">")
+            sys.stdout.flush()
             i, o, e = select.select([sys.stdin], [], [], 0.01)
             if i:
                 try:
                     selection = sys.stdin.readline().strip().lower()
                     if selection == 'exit':
-                        print('Winding down...')
                         done = True
                     elif selection == 'service':
                         app.send_service_message()
@@ -397,6 +404,8 @@ def main():
                         app.OnWink.fire(app, None)
                     else:
                         print('Valid commands are "exit", "service", "wink"')
+                        sys.stdout.write(">")
+                        sys.stdout.flush()
                 except Exception as e:
                     print(e)
 

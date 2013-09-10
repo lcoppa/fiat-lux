@@ -24,7 +24,7 @@ class LED:
         # Set frequency in Hz; the default 1000 works with my demo
         self._pwm.setPWMFreq(freq)
 
-    def set_led_level(channel, percent):
+    def set_led_level(self, channel, percent):
         # convert percentage in pulse
         pulse = int((percent/100)*4095)
         # set led level
