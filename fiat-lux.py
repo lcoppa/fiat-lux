@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 -tt
+#!/usr/bin/env python3
 
 """ Pilon application
     Controls RGB LEDs via network datapoints (color and brightness) and
@@ -55,6 +55,7 @@ RED_LED_PWM_CHANNEL = 0                 # Used by the LED object
 GREEN_LED_PWM_CHANNEL = 1               # Used by the LED object
 BLUE_LED_PWM_CHANNEL = 2                # Used by the LED object
 LED_OFFSET = 3                          # Used by the LED object
+MAX_LEDs = 4                            # Number of hw LEDs supported
 
 ################################################W############################
 # Main function
@@ -214,15 +215,15 @@ def main():
         # Create the LED block using the new IoT Load Control block
         led_iot_block = tuple(app.block(
             profile = UFPTiotLoad(),
-            ext_name = 'Color Lamp') for i in range(4))
+            ext_name = 'Color Lamp') for i in range(MAX_LEDs))
         # Create the power monitor block
         power_monitor_iot_block = tuple(app.block(
             profile = UFPTiotAnalogInput(),
-            ext_name = 'Lamp Power Monitor') for i in range(4))
+            ext_name = 'Lamp Power Monitor') for i in range(MAX_LEDs))
         # Create the energy monitor block
         energy_monitor_iot_block = tuple(app.block(
             profile = UFPTiotAnalogInput(),
-            ext_name = 'Lamp Energy Monitor') for i in range(4))
+            ext_name = 'Lamp Energy Monitor') for i in range(MAX_LEDs))
     else:
         # Create functional blocks based on legacy profiles
         # Use our RGB LED as a standard white light
@@ -241,11 +242,11 @@ def main():
     # Input datapoint update event handlers
     #######################################
 
-    # Define the on update handler for the IoT Load Control 
+    # Define the on update handler for the IoT Load Control
     # nviLoadControl input
     if not arguments.legacy:
         def on_led_nvi_load_control_update(sender, event_data):
-            logger.info('Processing network variable update '
+            logger.info('Processing network variable update'
                         ' {0}'.format(sender))
             print('Block index {0}'.format(sender.index))
 
@@ -275,18 +276,19 @@ def main():
                     # led_iot_block.nvoLoadStatus.data = \
                     # led_iot_block.nviLoadControl.data
                     print("LED {0} input is control {1}, state {2}, "
-                          "level {3}".format(i,
-                          sender.data.control,
-                          sender.data.state,
-                          sender.data.level))
+                          "level {3}".format(
+                              i,
+                              sender.data.control,
+                              sender.data.state,
+                              sender.data.level))
             except Exception as e:
                 print('Something just went wrong when updating RGB values '
                       'in on_led_nvi_load_control_update({0}):'
                       '{1}'.format(sender, e))
         # Create the on update handler for the nviValue input
-        for i in range(0, 4):
+        for i in range(0, MAX_LEDs):
             led_iot_block[i].nviLoadControl.OnUpdate += \
-        on_led_nvi_load_control_update
+            on_led_nvi_load_control_update
 
     # Define the on update handler for the Actuator nviValue input
     if arguments.legacy:
@@ -300,13 +302,13 @@ def main():
                         # Real LED available -- turn them on or off
                         # but treat it as white (no color)
                         # i.e. set same brightness to all colors
-                        
+
                         # check data point state field first
                         if led_legacy_block.nviValue.data.state == 1:
                             brightness = led_legacy_block.nviValue.data.value
                         else:
                             brightness = 0
-                        
+
                         # set the new brightness
                         this_led.set_led_level(
                             RED_LED_PWM_CHANNEL, brightness)
@@ -314,7 +316,7 @@ def main():
                             GREEN_LED_PWM_CHANNEL, brightness)
                         this_led.set_led_level(
                             BLUE_LED_PWM_CHANNEL, brightness)
-                        
+
                         print("LED has now value {0}, state {1}".format(
                               led_legacy_block_fb.nviValue.data.value,
                               led_legacy_block_fb.nviValue.data.state))
@@ -386,7 +388,7 @@ def main():
             #
             #   Interactive user input
             #
-            
+
             # prompt
             sys.stdout.write(">")
             sys.stdout.flush()
@@ -423,36 +425,40 @@ def main():
                 # Cycle LED brightness until user presses the sensor
                 # TODO: make dimming proportional to pressure level
                 while pressure < PRESSURE_DIMMING_THRESHOLD:
-                    # Read current dimming level for RGB LED as percentages
-                    r_dimming_level = led_block.nviValue.data.value
-                    # g_dimming_level = ...
-                    # b_dimming_level = ...
+                    if arguments.legacy:
+                        # TODO
+                        pass
+                    if not arguments.legacy:
+                        # Read latest dimming level for RGB LED as percentages
+                        r_dimming_level = led_legacy_block.nviValue.data.value
+                        g_dimming_level = led_legacy_block.nviValue.data.value
+                        b_dimming_level = led_legacy_block.nviValue.data.value
 
-                    # Reduce dimming until color is zero, then back up
-                    if r_dimming_level > 0 and r_dimming_level < 100:
-                        if dimming_down:
-                            # Down
-                            r_dimming_level -= 1
-                        else:
-                            # Up
-                            r_dimming_level += 1
-                        if arguments.color:
-                            # Set the LED brightness
-                            this_led.set_led_level(RED_LED_PWM_CHANNEL,
-                                                   r_dimming_level)
-                        time.sleep(0.2)
+                        # Reduce dimming until color is zero, then back up
+                        if r_dimming_level > 0 and r_dimming_level < 100:
+                            if dimming_down:
+                                # Down
+                                r_dimming_level -= 1
+                            else:
+                                # Up
+                                r_dimming_level += 1
+                            if arguments.color:
+                                # Set the LED brightness
+                                this_led.set_led_level(RED_LED_PWM_CHANNEL,
+                                                    r_dimming_level)
+                            time.sleep(0.2)
 
-                    if r_dimming_level == 0:
-                        # At bottom--dim up again
-                        dimming_down = False
-                        r_dimming_level = 1
-                    elif r_dimming_level == 100:
-                        # At top--dim down again
-                        dimming_down = True
-                        r_dimming_level = 99
+                        if r_dimming_level == 0:
+                            # At bottom--dim up again
+                            dimming_down = False
+                            r_dimming_level = 1
+                        elif r_dimming_level == 100:
+                            # At top--dim down again
+                            dimming_down = True
+                            r_dimming_level = 99
 
-                    # Update the corresponding NV
-                    # led_block = r_dimming_level
+                        # Update the corresponding NV
+                        # led_block = r_dimming_level
 
             #pdb.set_trace()
 
