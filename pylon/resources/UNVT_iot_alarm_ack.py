@@ -25,7 +25,7 @@ resource file set iot 90:00:00:05:00:00:00:00-1.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:57.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.userdefined import userdefined
@@ -56,18 +56,16 @@ class UNVT_iot_alarm_ack(base.Structure):
             self.__profile_index = base.Scaled(
                 size=2,
                 signed=False,
-                invalid=65535,
                 minimum=0,
-                maximum=65534
+                maximum=127
             )
             self._register(('profile_index', self.__profile_index))
 
             self.__block_index = base.Scaled(
                 size=2,
                 signed=False,
-                invalid=65535,
                 minimum=0,
-                maximum=65534
+                maximum=127
             )
             self._register(('block_index', self.__block_index))
 
@@ -143,7 +141,7 @@ class UNVT_iot_alarm_ack(base.Structure):
                         size=1,
                         signed=False,
                         minimum=0,
-                        maximum=255
+                        maximum=127
                     ) for i in range(120)
                 ]
             )

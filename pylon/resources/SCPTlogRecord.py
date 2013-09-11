@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -429,13 +429,17 @@ class SCPTlogRecord(base.Structure):
                     type(v)
                 )
             )
+        self.__set_timestamp_type(v.__timestamp_type)
+        self.__set_record_type(v.__record_type)
+        self.__set_multiple_input(v.__multiple_input)
+        self.__set_fan_in(v.__fan_in)
+        self.__set_point_status(v.__point_status)
         self.__set_data_length(v.__data_length)
         self.__set_time(v.__time)
         self.__set_member_index(v.__member_index)
         self.__set_data_source_index(v.__data_source_index)
         self.__set_data(v.__data)
         self.__set_point_status_value(v.__point_status_value)
-        self.___bf00(v.___bf00)
 
     _value = property(lambda self: self, __set)
 

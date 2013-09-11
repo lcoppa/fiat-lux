@@ -212,7 +212,7 @@ class Datapoint(Interface):
             # Add this item to the queue of pending things only if it is not
             # currently locked, and only if it is an output.
             # It is assumed that a locked item is currently within a
-            # with-block, which enqueues the item upon exit. Scripts which make
+            # with-block, which queues the item upon exit. Scripts which make
             # explicit calls to lock must explicitly unlock and propagate as
             # necessary.
             try:

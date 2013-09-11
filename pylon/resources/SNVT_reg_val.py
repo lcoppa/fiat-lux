@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -117,7 +117,7 @@ class SNVT_reg_val(base.Structure):
             )
         self.__set_raw(v.__raw)
         self.__set_unit(v.__unit)
-        self.___bf00(v.___bf00)
+        self.__set_nr_decimals(v.__nr_decimals)
 
     _value = property(lambda self: self, __set)
 

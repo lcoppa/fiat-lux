@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -576,20 +576,28 @@ class SNVT_safe_2(base.Structure):
                     type(v)
                 )
             )
+        self.__set_id_a_header(v.__id_a_header)
+        self.__set_id_a_format(v.__id_a_format)
+        self.__set_id_a_version(v.__id_a_version)
+        self.__set_id_a_length(v.__id_a_length)
         self.__set_address_a_1(v.__address_a_1)
+        self.__set_address_a_timedate(v.__address_a_timedate)
+        self.__set_address_a_2(v.__address_a_2)
         self.__set_address_a_3(v.__address_a_3)
         self.__set_time_stamp_msword(v.__time_stamp_msword)
         self.__set_data_a(v.__data_a)
         self.__set_crc_a(v.__crc_a)
+        self.__set_id_b_header(v.__id_b_header)
+        self.__set_id_b_format(v.__id_b_format)
+        self.__set_id_b_version(v.__id_b_version)
+        self.__set_id_b_length(v.__id_b_length)
         self.__set_address_b_1(v.__address_b_1)
+        self.__set_address_b_timedate(v.__address_b_timedate)
+        self.__set_address_b_2(v.__address_b_2)
         self.__set_address_b_3(v.__address_b_3)
         self.__set_time_stamp_lsword(v.__time_stamp_lsword)
         self.__set_data_b(v.__data_b)
         self.__set_crc_b(v.__crc_b)
-        self.___bf03(v.___bf03)
-        self.___bf02(v.___bf02)
-        self.___bf01(v.___bf01)
-        self.___bf00(v.___bf00)
 
     _value = property(lambda self: self, __set)
 

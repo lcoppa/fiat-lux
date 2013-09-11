@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -511,9 +511,23 @@ class SNVT_dev_status(base.Structure):
                             type(v)
                         )
                     )
-                self.___bf02(v.___bf02)
-                self.___bf01(v.___bf01)
-                self.___bf00(v.___bf00)
+                self.__set_device_fault(v.__device_fault)
+                self.__set_supply_fault(v.__supply_fault)
+                self.__set_reserved1_2(v.__reserved1_2)
+                self.__set_speed_low(v.__speed_low)
+                self.__set_speed_high(v.__speed_high)
+                self.__set_reserved1_5(v.__reserved1_5)
+                self.__set_setpt_out_of_range(v.__setpt_out_of_range)
+                self.__set_reserved1_7(v.__reserved1_7)
+                self.__set_local_control(v.__local_control)
+                self.__set_reserved2_1(v.__reserved2_1)
+                self.__set_running(v.__running)
+                self.__set_reserved2_3(v.__reserved2_3)
+                self.__set_remote_press(v.__remote_press)
+                self.__set_remote_flow(v.__remote_flow)
+                self.__set_remote_temp(v.__remote_temp)
+                self.__set_reserved2_7(v.__reserved2_7)
+                self.__set_reserved3_0_7(v.__reserved3_0_7)
 
             _value = property(lambda self: self, __set)
 
@@ -836,9 +850,17 @@ class SNVT_dev_status(base.Structure):
                             type(v)
                         )
                     )
-                self.___bf02(v.___bf02)
-                self.___bf01(v.___bf01)
-                self.___bf00(v.___bf00)
+                self.__set_running(v.__running)
+                self.__set_adapting(v.__adapting)
+                self.__set_initializing(v.__initializing)
+                self.__set_local_control(v.__local_control)
+                self.__set_setpt_out_of_range(v.__setpt_out_of_range)
+                self.__set_remote_ctrl_signal(v.__remote_ctrl_signal)
+                self.__set_reserved1_6_7(v.__reserved1_6_7)
+                self.__set_hw_emergency(v.__hw_emergency)
+                self.__set_sw_emergency(v.__sw_emergency)
+                self.__set_reserved2_2_7(v.__reserved2_2_7)
+                self.__set_reserved3_0_7(v.__reserved3_0_7)
 
             _value = property(lambda self: self, __set)
 

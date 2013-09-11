@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -262,8 +262,13 @@ class SNVT_trans_table(base.Structure):
                 )
             )
         self.__set_point(v.__point)
-        self.___bf01(v.___bf01)
-        self.___bf00(v.___bf00)
+        self.__set_interp_pts_0_to_1(v.__interp_pts_0_to_1)
+        self.__set_interp_pts_1_to_2(v.__interp_pts_1_to_2)
+        self.__set_interp_pts_2_to_3(v.__interp_pts_2_to_3)
+        self.__set_interp_pts_3_to_4(v.__interp_pts_3_to_4)
+        self.__set_interp_pts_4_to_5(v.__interp_pts_4_to_5)
+        self.__set_interp_pts_5_to_6(v.__interp_pts_5_to_6)
+        self.__set_interp_pts_6_to_0(v.__interp_pts_6_to_0)
 
     _value = property(lambda self: self, __set)
 

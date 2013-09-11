@@ -25,7 +25,7 @@ resource file set standard 00:00:00:00:00:00:00:00-0."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -429,7 +429,6 @@ class SFPTautomaticTransferSwitch(base.Profile):
             profile=self,
             number=11,
             datatype=SCPTmaxSendTime,
-            array_size_max=16,
             default=b'\x00\x00',
             mandatory=False
         )

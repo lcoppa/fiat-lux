@@ -60,4 +60,3 @@ class SNVT_xxx(base.DataType):
 
     def __str__(self):
         return 'SNVT_xxx'
-

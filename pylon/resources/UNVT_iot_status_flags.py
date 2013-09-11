@@ -25,7 +25,7 @@ resource file set iot 90:00:00:05:00:00:00:00-1.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:57.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.userdefined import userdefined
@@ -157,7 +157,10 @@ class UNVT_iot_status_flags(base.Structure):
                     type(v)
                 )
             )
-        self.___bf00(v.___bf00)
+        self.__set_in_alarm(v.__in_alarm)
+        self.__set_fault(v.__fault)
+        self.__set_overridden(v.__overridden)
+        self.__set_out_of_service(v.__out_of_service)
 
     _value = property(lambda self: self, __set)
 

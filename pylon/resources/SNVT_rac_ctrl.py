@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -179,9 +179,11 @@ class SNVT_rac_ctrl(base.Structure):
                         type(v)
                     )
                 )
+            self.__set_unit_id(v.__unit_id)
+            self.__set_location(v.__location)
+            self.__set_car_id(v.__car_id)
+            self.__set_reserved(v.__reserved)
             self.__set_audio_sensor_type(v.__audio_sensor_type)
-            self.___bf01(v.___bf01)
-            self.___bf00(v.___bf00)
 
         _value = property(lambda self: self, __set)
 
@@ -331,9 +333,11 @@ class SNVT_rac_ctrl(base.Structure):
                         type(v)
                     )
                 )
+            self.__set_unit_id(v.__unit_id)
+            self.__set_location(v.__location)
+            self.__set_car_id(v.__car_id)
+            self.__set_reserved(v.__reserved)
             self.__set_audio_sensor_type(v.__audio_sensor_type)
-            self.___bf01(v.___bf01)
-            self.___bf00(v.___bf00)
 
         _value = property(lambda self: self, __set)
 
@@ -485,9 +489,11 @@ class SNVT_rac_ctrl(base.Structure):
                             type(v)
                         )
                     )
+                self.__set_unit_id(v.__unit_id)
+                self.__set_location(v.__location)
+                self.__set_car_id(v.__car_id)
+                self.__set_reserved(v.__reserved)
                 self.__set_audio_sensor_type(v.__audio_sensor_type)
-                self.___bf01(v.___bf01)
-                self.___bf00(v.___bf00)
 
             _value = property(lambda self: self, __set)
 
@@ -831,11 +837,14 @@ class SNVT_rac_ctrl(base.Structure):
                     type(v)
                 )
             )
+        self.__set_audio_line(v.__audio_line)
+        self.__set_duplex_full(v.__duplex_full)
+        self.__set_dest_p2p(v.__dest_p2p)
+        self.__set_reserved(v.__reserved)
         self.__set_audio_type(v.__audio_type)
         self.__set_addr_init(v.__addr_init)
         self.__set_addr_talk(v.__addr_talk)
         self.__set_addr_dest(v.__addr_dest)
-        self.___bf00(v.___bf00)
 
     _value = property(lambda self: self, __set)
 

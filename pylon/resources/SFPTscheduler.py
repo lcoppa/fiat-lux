@@ -25,7 +25,7 @@ standard 00:00:00:00:00:00:00:00-0."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -143,8 +143,6 @@ class SFPTscheduler(base.Profile):
                     profile=self,
                     number=12,
                     datatype=SCPTvalueName,
-                    array_size_min=2,
-                    array_size_max=65535,
                     flags=base.PropertyFlags.DISABLE,
                     mandatory=False
                 ),
@@ -182,8 +180,6 @@ class SFPTscheduler(base.Profile):
                     profile=self,
                     number=17,
                     datatype=SCPTvalueDefinition,
-                    array_size_min=2,
-                    array_size_max=65535,
                     flags=base.PropertyFlags.DISABLE,
                     mandatory=True
                 )
@@ -238,8 +234,6 @@ class SFPTscheduler(base.Profile):
             profile=self,
             number=15,
             datatype=SCPTschedule,
-            array_size_min=2,
-            array_size_max=65535,
             flags=base.PropertyFlags.DISABLE,
             mandatory=True
         )
@@ -250,8 +244,6 @@ class SFPTscheduler(base.Profile):
             profile=self,
             number=16,
             datatype=SCPTscheduleTimeValue,
-            array_size_min=2,
-            array_size_max=65535,
             flags=base.PropertyFlags.DISABLE,
             mandatory=True
         )
@@ -272,8 +264,6 @@ class SFPTscheduler(base.Profile):
             profile=self,
             number=19,
             datatype=SCPTscheduleName,
-            array_size_min=2,
-            array_size_max=255,
             flags=base.PropertyFlags.DISABLE,
             mandatory=False
         )

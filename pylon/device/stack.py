@@ -1100,7 +1100,7 @@ class Stack(toolkit.PilonObject):
         """
         self.__on_event_ready_handler = handler
 
-    def __on_reset(self):
+    def __on_reset(self, void):
         """First-level onReset handler."""
         try:
             if self.__on_reset_handler:

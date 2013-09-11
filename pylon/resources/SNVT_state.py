@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -464,8 +464,22 @@ class SNVT_state(base.Structure):
                     type(v)
                 )
             )
-        self.___bf01(v.___bf01)
-        self.___bf00(v.___bf00)
+        self.__set_bit0(v.__bit0)
+        self.__set_bit1(v.__bit1)
+        self.__set_bit2(v.__bit2)
+        self.__set_bit3(v.__bit3)
+        self.__set_bit4(v.__bit4)
+        self.__set_bit5(v.__bit5)
+        self.__set_bit6(v.__bit6)
+        self.__set_bit7(v.__bit7)
+        self.__set_bit8(v.__bit8)
+        self.__set_bit9(v.__bit9)
+        self.__set_bit10(v.__bit10)
+        self.__set_bit11(v.__bit11)
+        self.__set_bit12(v.__bit12)
+        self.__set_bit13(v.__bit13)
+        self.__set_bit14(v.__bit14)
+        self.__set_bit15(v.__bit15)
 
     _value = property(lambda self: self, __set)
 

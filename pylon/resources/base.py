@@ -31,7 +31,6 @@ blocks) through the pilon Application class and its factory methods.
 
 import logging
 import struct
-import threading
 
 from pylon.device import toolkit
 
@@ -61,6 +60,7 @@ class Type(toolkit.PilonObject):
         super().__init__()
         self.__key = int(key)
         self.__scope = int(scope)
+        self.__obsolete = False
 
     _key = property(
         lambda self: self.__key,
@@ -68,7 +68,7 @@ class Type(toolkit.PilonObject):
         None, """Return the key value or -1 if not applicable.
 
         This property provides the key, or type index, matching the definition
-        of this interoperable item. -1 is returned if for nested Type objects,
+        of this interoperable item. -1 may be returned for nested Type objects,
         which may not have a valid key.
     """)
 
@@ -82,9 +82,28 @@ class Type(toolkit.PilonObject):
         standard, values 3 to 6 are used for user-defined types. See the
         LonMark International website at www.lonmark.org for more details.
 
-        The property returns -1 for nested Type objects, which may not have a
-        value scope value.
+        The property may return -1 for nested Type objects, which may not have
+        a value scope value.
     """)
+
+    _is_obsolete = property(
+        lambda self: self.__obsolete,
+        None,
+        None, """Indicates an obsolete profile, datapoint or property type.
+
+        Indicates whether the type is marked as obsolete.
+        Obsolete definitions may be used with existing design, but their use in
+        new development is not recommended."""
+    )
+
+    def _mark_obsolete(self):
+        """Mark the current type as obsolete.
+        This utility is used during the instantiation of resources. Use the
+        _is_obsolete property to query this flag. A resource is generally
+        flagged obsolete in its definition (typically within a device resource
+        file); the 'obsolete' flag should be considered read-only from the
+        script."""
+        self.__obsolete = True
 
     def _override_key(self, k):
         """Override the key set with the constructor.
@@ -115,7 +134,8 @@ class Type(toolkit.PilonObject):
         on a given physical device (hardware), unless an aspect affecting the
         interoperable interface changes.
         """
-        return self.__key << 3 + self.__scope
+        seed = 0x400000 if self.__obsolete else 0
+        return seed | (self.__key << 3 + self.__scope)
 
 
 class Definition(toolkit.PilonObject):
@@ -233,6 +253,15 @@ class DataType(Type):
         self.__unpack_format = self.__pack_format = '?'
         self.__onAssign = None
 
+        # Objects derived from DataType may specify optional minimum, maximum,
+        # invalid and default bytes objects, if such data is available. If
+        # provided, these are applied when the DataType is instantiated as part
+        # of an interface object (a Datapoint, a Property, or a Block).
+        self._minimum_bytes = None
+        self._maximum_bytes = None
+        self._invalid_bytes = None
+        self._default_bytes = None
+
     def _set_onAssign(self, handler):
         """Register an onAssign handler.
 
@@ -344,6 +373,8 @@ class Scaled(DataType):
 
     __format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
     __limits = {1: 127, 2: 32767, 4: 2147483647, 8: 9223372036854775807}
+    __masks = (0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF)
+    __pow2 = (1, 2, 4, 8, 16, 32, 64, 128)
 
     def __init__(self, size, signed, key=-1, scope=-1, default=None,
                  scaling=(1, 0),
@@ -380,7 +411,7 @@ class Scaled(DataType):
         self.__invalid = invalid
 
         self.__size = size
-        self.__value = self.__default
+        self.__value = self.__default if self.__default else 0
         self.__signed = signed
 
         if signed:
@@ -586,6 +617,33 @@ class Scaled(DataType):
         """
         self.__invalid = self.__value
 
+    def _setbits(self, value, size, offset):
+        """This utility is used by bitfields setters.
+        This utility supports single-byte containers only."""
+        if self.__size == 1 and 1 <= size <= 8 and 0 <= offset <= 7:
+            mask = Scaled.__masks[size-1] >> offset
+
+            self.__value &= ~mask
+            if value:
+                self.__value |= value << 8-offset-size & mask
+        else:
+            raise AttributeError('bad parameters')
+
+    def _getbits(self, size, offset, signed):
+        """This utility is used by bitfield getters.
+        This utility supports single-byte containers only."""
+        if self.__size == 1 and 1 <= size <= 8 and 0 <= offset <= 7:
+            mask = Scaled.__masks[size-1] >> offset
+            value = (self.__value & mask) >> 8 - size - offset
+            umax = Scaled.__pow2[size-1]
+
+            if signed and value > umax - 1:
+                value -= 2*umax
+            return value
+
+        else:
+            raise AttributeError('bad parameters')
+
 
 class Enumeration(DataType):
     """Base type for all interoperable enumerations.
@@ -626,7 +684,8 @@ class Enumeration(DataType):
     def __init__(self, prefix, key=-1, scope=-1, default=None):
         """Create an Enumeration object."""
         super().__init__(key, scope)
-        self.__value = self.__default = default
+        self.__default = default
+        self.__value = default if default else 0
         self.__prefix = prefix
 
     def __set_value(self, v):
@@ -757,7 +816,11 @@ class Float(DataType):
                  minimum=None, maximum=None,
                  default=0):
         super().__init__(key, scope)
-        self.__value = self.__default = float(default)
+
+        if default:
+            self.__value = self.__default = float(default)
+        else:
+            self.__value = self.__default = 0.0
 
         if single:
             self.__maximum = 3.4028234e38
@@ -1337,7 +1400,8 @@ class Array(DataType):
         interoperable interface changes.
         """
         signature = super()._signature()
-        signature ^= len(self._elements) << 5 + self._elements[0]._signature()
+        signature ^= (len(self._elements) << 5) + \
+                        self._elements[0]._signature()
 
         return signature
 
@@ -1353,10 +1417,10 @@ class Array(DataType):
         render a device not interoperable, as the implementation would differ
         from the published type.
 
-        The Union applies this call to all members.
+        The Array applies this call to all members.
         """
         for member in self._elements:
-            member[1]._accept_as_minimum()
+            member._accept_as_minimum()
 
     def _accept_as_maximum(self):
         """Accept the current value as the maximum value.
@@ -1370,10 +1434,10 @@ class Array(DataType):
         render a device not interoperable, as the implementation would differ
         from the published type.
 
-        The Structure applies this call to all members.
+        The Array applies this call to all members.
         """
         for member in self._elements:
-            member[1]._accept_as_maximum()
+            member._accept_as_maximum()
 
     def _accept_as_default(self):
         """Accept the current value as the default value.
@@ -1387,10 +1451,10 @@ class Array(DataType):
         render a device not interoperable, as the implementation would differ
         from the published type.
 
-        The Structure applies this call to all members.
+        The Array applies this call to all members.
         """
         for member in self._elements:
-            member[1]._accept_as_default()
+            member._accept_as_default()
 
     def _accept_as_invalid(self):
         """Accept the current value as the dedicated invalid value.
@@ -1404,10 +1468,10 @@ class Array(DataType):
         render a device not interoperable, as the implementation would differ
         from the published type.
 
-        The Structure applies this call to all members.
+        The Array applies this call to all members.
         """
         for member in self._elements:
-            member[1]._accept_as_invalid()
+            member._accept_as_invalid()
 
 
 class PropertyFlags:
@@ -1435,6 +1499,10 @@ class Profile(Type):
         MEMBER_SELECTORS = '|#'
 
         def __init__(self, name, profile, number, datatype, mandatory,
+                     minimum=None,
+                     maximum=None,
+                     invalid=None,
+                     default=None,
                      doc=''):
             """Create a Member object.
 
@@ -1445,8 +1513,24 @@ class Profile(Type):
             datatype    The type to use (not an instance of the type!)
             mandatory   True for mandatory profile members
 
-            Datapoint members may specify the datatype as None, indicating that
-            any interoperable datapoint type may be used for this member.
+            minimum, maximum, invalid, default:
+
+            These are optional parameters. If specified as not None, a bytes
+            object must be supplied with the correct number of bytes, which is
+            used to define the minimum (maximum, etc) value of the property or
+            datapoint to be implemented. In this release, the bytes array must
+            be provided as a compact, raw (un-scaled) big-endian stream of
+            bytes.
+            When a property member is implemented, minimum (maximum, etc)
+            values defined with the property type are applied (if any),
+            followed by the application of minimum (maximum, etc) values
+            defined with the property member. Minimum (maximum, etc) values
+            provided with the property member thus provide a means to override
+            the preferences defined with the property type.
+            When a datapoint member is implemented, minimum (maximum, invalid)
+            values are applied in the exact same manner as with property
+            members, except that datapoint members never specify a default
+            value.
             """
 
             super().__init__()
@@ -1468,6 +1552,10 @@ class Profile(Type):
             self.__doc__ = doc
             self.__implementer = None
             self.__derivation = profile.derivation
+            self.__minimum = minimum
+            self.__maximum = maximum
+            self.__invalid = invalid
+            self.__default = default
 
         name = property(
             lambda self: self.__name,
@@ -1519,6 +1607,30 @@ class Profile(Type):
             """
         )
 
+        _minimum = property(
+            lambda self: self.__minimum,
+            None,
+            None, """Return the 'minimum' bytes object or None."""
+        )
+
+        _maximum = property(
+            lambda self: self.__minimum,
+            None,
+            None, """Return the 'maximum' bytes object or None."""
+        )
+
+        _invalid = property(
+            lambda self: self.__invalid,
+            None,
+            None, """Return the 'invalid' bytes object or None."""
+        )
+
+        _default = property(
+            lambda self: self.__default,
+            None,
+            None, """Return the 'default' bytes object or None."""
+        )
+
         def _signature(self):
             """Return a 32-bit signature for this item.
 
@@ -1554,10 +1666,6 @@ class Profile(Type):
         # to pilon.
         #
 
-# ### TODO REMINDER support minimum value overrides
-# ### TODO REMINDER support maximum value overrides
-# ### TODO REMINDER support invalid value overrides
-
         INPUT = 0x80           # member is input (otherwise output)
         OUTPUT = 0x00          # logic inverse of INPUT
 
@@ -1569,6 +1677,7 @@ class Profile(Type):
 
         def __init__(self, name, profile, number, datatype, mandatory,
                      direction, polled=False, service=UNSPECIFIED, doc='',
+                     minimum=None, maximum=None, invalid=None,
                      properties=None):
             """Create a DatapointMember object.
 
@@ -1581,12 +1690,25 @@ class Profile(Type):
             direction   DatapointMember.INPUT or OUTPUT
             polled      Boolean 'polled' requirement
             service     DatapointMember.ACKNOWLEDGED, (UN)REPEATED or UNSPEC.
+            minimum     minimum bytes object or None, see Profile.Member
+            maximum     maximum bytes object or None, see Profile.Member
+            invalid     invalid bytes object or None, see Profile.Member
 
             When the member is created, apply minimum, maximum or invalid value
             overrides if necessary.
 
             """
-            super().__init__(name, profile, number, datatype, mandatory, doc)
+            super().__init__(
+                name=name,
+                profile=profile,
+                number=number,
+                datatype=datatype,
+                mandatory=mandatory,
+                minimum=minimum,
+                maximum=maximum,
+                invalid=invalid,
+                doc=doc
+            )
             self.__is_output = direction != Profile.DatapointMember.INPUT
             self.__is_polled = polled
             self.__service = service
@@ -1655,6 +1777,10 @@ class Profile(Type):
         def __init__(self, name, profile, number, datatype, mandatory,
                      min_array=0, max_array=0,
                      flags=PropertyFlags.NONE,
+                     minimum=None,
+                     maximum=None,
+                     invalid=None,
+                     default=None,
                      doc=''):
             """Create a PropertyMember object.
 
@@ -1667,6 +1793,10 @@ class Profile(Type):
             min_array   Minimum size for CP array
             max_array   Maximum size for CP array
             flags       See base.PropertyFlags.DEVICE_SPECIFIC, MFG, RESET, etc
+            minimum     Set to None or provide bytes object. See Profile.Member
+            maximum     Set to None or provide bytes object. See Profile.Member
+            invalid     Set to None or provide bytes object. See Profile.Member
+            default     Set to None or provide bytes object. See Profile.Member
 
             Array boundary requirements are specified as follows:
 
@@ -1679,7 +1809,18 @@ class Profile(Type):
             min_array == N, N>=0, max_array == M, M>N:
             Array implementation permitted, size N..M
             """
-            super().__init__(name, profile, number, datatype, mandatory, doc)
+            super().__init__(
+                name=name,
+                profile=profile,
+                number=number,
+                datatype=datatype,
+                mandatory=mandatory,
+                minimum=minimum,
+                maximum=maximum,
+                invalid=invalid,
+                default=default,
+                doc=doc
+            )
             self.__min_array = min_array
             self.__max_array = max_array
             self.__flags = flags | PropertyFlags.NONE     # NONE != 0!
@@ -1832,9 +1973,8 @@ class Profile(Type):
                 array
             )
 
-    def __init__(self, key, scope, principal=None, obsolete=False):
+    def __init__(self, key, scope, principal=None):
         super().__init__(key, scope)
-        self.__obsolete = obsolete
         self.__principal = principal
         self.__derivation = 0
         self.datapoints = {}    # holds DatapointMember objects
@@ -1864,16 +2004,6 @@ class Profile(Type):
         but note that the derivation does not equal the scope selector value.
     """)
 
-    is_obsolete = property(
-        lambda self: self.__obsolete,
-        None,
-        None, """Indicates an obsolete profile.
-
-        Indicates whether the profile is marked as obsolete.
-        Obsolete profiles may be used with existing design, but their use in
-        new development is not recommended."""
-    )
-
     is_inheriting = property(
         lambda self: self.type != Profile,
         None,
@@ -1883,6 +2013,11 @@ class Profile(Type):
         Profile-inheritance is only supported by inheriting from a standard
         profile, and is subject to further restrictions."""
     )
+
+    def _override_principal(self, v):
+        """During the creation of inheriting profiles, _override_principle may
+        be used to override the inherited principal datapoint member. """
+        self.__principal = v
 
     principal = property(
         lambda self: self.__principal,
@@ -1904,7 +2039,7 @@ class Profile(Type):
         on a given physical device (hardware), unless an aspect affecting the
         interoperable interface changes.
         """
-        signature = super()._signature() + self.__obsolete
+        signature = super()._signature()
 
         # Iterate over *sorted* lists of dictionary keys, as the native element
         # order within a dictionary is not deterministic, and could therefore

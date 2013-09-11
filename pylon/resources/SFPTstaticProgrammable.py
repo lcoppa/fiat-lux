@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -152,7 +152,6 @@ class SFPTstaticProgrammable(base.Profile):
             profile=self,
             number=8,
             datatype=SCPTprogCmdHistory,
-            array_size_max=9999,
             flags=base.PropertyFlags.DEVICE_SPECIFIC |
                 base.PropertyFlags.CONST,
             default=b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -172,7 +171,6 @@ class SFPTstaticProgrammable(base.Profile):
             profile=self,
             number=9,
             datatype=SCPTprogStateHistory,
-            array_size_max=9999,
             flags=base.PropertyFlags.DEVICE_SPECIFIC |
                 base.PropertyFlags.CONST,
             default=b'\x00\x00\x00\x00\x00\x00\x00\x00',
@@ -196,7 +194,6 @@ class SFPTstaticProgrammable(base.Profile):
             profile=self,
             number=11,
             datatype=SCPTprogErrorHistory,
-            array_size_max=9999,
             flags=base.PropertyFlags.DEVICE_SPECIFIC |
                 base.PropertyFlags.CONST,
             default=b'\x00\x00\x00\x00\x00\x00\x00\x00',

@@ -46,7 +46,7 @@ class PylonError(Exception):
     Classes derived from PylonError are
 
     PylonContextError for errors caused by a bad context (too late, bad thread)
-    PylonLimitError for those caused by exceeding an architectured limit
+    PylonLimitError for those caused by exceeding an intrinsic limit
     PylonInterfaceError for those related to the interoperable interface
     IsiError for those related to interoperable self-installation
     """
@@ -273,7 +273,7 @@ class Enum:
 
 
 class PilonObject:
-    """Root for most obects defined within this package.
+    """Root for most objects defined within this package.
 
     PilonObject provides a root class with utility functions used by
     several classes defined within the pilon package.

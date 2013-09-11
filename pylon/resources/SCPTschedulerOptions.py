@@ -25,7 +25,7 @@ resource file set standard 00:00:00:00:00:00:00:00-0."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:58.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -163,7 +163,10 @@ class SCPTschedulerOptions(base.Structure):
                     type(v)
                 )
             )
-        self.___bf00(v.___bf00)
+        self.__set_reserved(v.__reserved)
+        self.__set_alternate_time_source(v.__alternate_time_source)
+        self.__set_general_purpose_output(v.__general_purpose_output)
+        self.__set_sunrise_sunset_relative(v.__sunrise_sunset_relative)
 
     _value = property(lambda self: self, __set)
 

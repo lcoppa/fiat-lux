@@ -25,7 +25,7 @@ resource file set iot 90:00:00:05:00:00:00:00-1.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 06-Sep-2013 08:57.
+# Generated at 05-Sep-2013 10:50.
 
 from pylon.resources import base
 from pylon.resources.userdefined import userdefined
@@ -58,7 +58,7 @@ class UNVT_iot_load_control(base.Structure):
                         size=1,
                         signed=False,
                         minimum=0,
-                        maximum=255
+                        maximum=127
                     ) for i in range(8)
                 ]
             )
@@ -103,16 +103,15 @@ class UNVT_iot_load_control(base.Structure):
         self.__state = base.Scaled(
             size=1,
             signed=False,
-            invalid=255,
             minimum=0,
-            maximum=254
+            maximum=127
         )
         self._register(('state', self.__state))
 
         self.__level = base.Float(
             single=True,
             minimum=0,
-            maximum=3.40282E+038
+            maximum=127
         )
         self._register(('level', self.__level))
 
@@ -183,11 +182,10 @@ class UNVT_iot_load_control(base.Structure):
         self._register(('priority', self.__priority))
 
         self.__scene_number = base.Scaled(
-            size=2,
+            size=1,
             signed=False,
-            invalid=65535,
             minimum=0,
-            maximum=65534
+            maximum=127
         )
         self._register(('scene_number', self.__scene_number))
 
@@ -471,7 +469,7 @@ class UNVT_iot_load_control(base.Structure):
 
     def __len__(self):
         """Return the length of the type, in bytes."""
-        return 60
+        return 59
 
 
 if __name__ == '__main__':

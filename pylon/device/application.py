@@ -161,9 +161,39 @@ class Application:
             )
 
     def _validate_prestart_context(self):
-        """Combine thread and prestart validations."""
+        """Combine thread and pre-start validations."""
         self._validate_thread()
         self._validate_prestart()
+
+    def _apply_bytes(self, dpi, minimum, maximum, invalid, default):
+        """Apply the minimum, maximum, invalid and default bytes objects,
+        if any. In case a default bytes object is provided, this is applied
+        last so that the item starts out with these default values. If no
+        default bytes object is provided, a temporary default bytes object
+        is created using the present values, and re-applied as the default
+        at the end of the sequence."""
+
+        if minimum or maximum or invalid or default:
+            # Only do anything if anything is to do at all, but if anything is
+            # to do here, and a default bytes object isn't given, make one by
+            # packing the current value. This is required because we must
+            # restore the current (default) value after applying any of the
+            # minimum, maximum or invalid bytes objects, because this process
+            # modifies the current value.
+            if not default:
+                default = dpi._pack()
+
+            if minimum:
+                dpi._unpack(minimum)
+                dpi._accept_as_minimum()
+            if maximum:
+                dpi._unpack(maximum)
+                dpi._accept_as_maximum()
+            if invalid:
+                dpi._unpack(invalid)
+                dpi._accept_as_invalid()
+            dpi._unpack(default)
+            dpi._accept_as_default()
 
     def __datapoint(self, object_type, data, flags, name=None, sd=None):
         """Produce a Datapoint or PropertyDatapoint object.
@@ -195,7 +225,6 @@ class Application:
         dpd.ArrayCount = 0
 
         if name:
-            name = self.__ext_name_mangle(self.__dp_names, name)
             dpd.Name = name.encode(
                 encoding='ascii',
                 errors='ignore'
@@ -211,24 +240,42 @@ class Application:
         dp = object_type(self, index, dpd, data, sd)
         self.__datapoints.append(dp)
 
-        #    ### TODO REMINDER review formula:
-        self.__aliases = int(
-            max(
-                3,
-                min(
-                    pylon.device.stack.MAX_ALIASES,
-                    (index + 1) / 3
+        if dp.is_property:
+            self.__no_dpp += 1
+        elif dp.is_output:
+            self.__no_dpo += 1
+        else:
+            self.__no_dpi += 1
+
+        if self.__auto_aliases:
+            self.__aliases = int(
+                max(
+                    3,
+                    min(
+                        pylon.device.stack.MAX_ALIASES,
+                        self.__no_dpo/3 + self.__no_dpi/4 + self.__no_dpp/10
+                    )
                 )
             )
-        )
-        self.__addresses = int(
-            max(
-                15,
-                min(
-                    pylon.device.stack.MAX_ADDRESSES,
-                    (index + 1) / 4
+        if self.__auto_addresses:
+            self.__addresses = int(
+                max(
+                    15,
+                    min(
+                        pylon.device.stack.MAX_ADDRESSES,
+                        self.__bindable_mt +
+                            self.__no_dpi/4 + self.__no_dpi/5 + self.__no_dpp/8
+                    )
                 )
             )
+
+        dpi = dp.get_data_item()
+        self._apply_bytes(
+            dpi,
+            dpi._minimum_bytes,
+            dpi._maximum_bytes,
+            dpi._invalid_bytes,
+            dpi._default_bytes
         )
 
         logger.info('{0} {1}: {2}, "{3}"'.format(
@@ -384,20 +431,34 @@ class Application:
         self.__is_unique_id_set = False
 
         self.__dynamic_dps = 0
+        # Track numbers of input and output datapoints through separate
+        # counters, as these are used to determine the size of address and
+        # alias tables. Properties implemented as datapoints weigh less in the
+        # address and alias allocation (because they are not typically
+        # connected to other items), so they are counted separately.
+        self.__no_dpo = 0   # output data points
+        self.__no_dpi = 0   # input data points
+        self.__no_dpp = 0   # (input) data points implementing properties
+
+        # Automatic allocation of address and alias table records can be
+        # overwritten by the script through an explicit assignment to the
+        # aliases and addresses properties. This is monitored with the auto_*
+        # attributes:
+        self.__auto_aliases = True
+        self.__auto_addresses = True
+
         self.__domains = 2
         self.__addresses = 15
         self.__aliases = 0
         self.__bindable_mt = 0
         self.__sd_string = ''
-        self.__avg_dyn_dp_sd_size = 12    # TODO REMINDER: check this default
-
-    #    ### TODO Reminder raise the default logging level to WARNING
+        self.__avg_dyn_dp_sd_size = 18
 
     def __init__(self,
                  library='libpylon-stack.so',
                  use_isi=True,
                  log_file='pylon-rtk.log',
-                 log_level=logging.DEBUG):
+                 log_level=logging.WARNING):
         """Create the Application object.
 
         The application class implements the Application class. Each Pilon
@@ -473,8 +534,7 @@ class Application:
         self.__transmit_transactions = 4
         self.__transmit_ttl = 24576
 
-        # TODO REMINDER support pilon-style device URI once the stack is ready
-        self.__device_uri = '//0.0.0.0:1628/uc'
+        self.__device_uri = 'uc://0.0.0.0:1628'
         self.__persistence_path = '.pylon-nvd'
 
         self.OnReset = event.SimpleEvent(
@@ -710,9 +770,8 @@ class Application:
         ifd.NvTblSize = len(self.__datapoints) + self.__dynamic_dps
         ifd.DomainTblSize = self.__domains
         ifd.AddrTblSize = self.__addresses
-        ifd.AliasTblSize = self.__aliases if self.__aliases > 0 else 0
-        ifd.BindableMsgTagCount = self.__bindable_mt \
-            if self.__bindable_mt < self.__addresses else self.__addresses - 1
+        ifd.AliasTblSize = self.__aliases
+        ifd.BindableMsgTagCount = self.__bindable_mt
         ifd.NodeSdString = toolkit.ebcdic(self.__sd_string)
         ifd.AvgDynNvSdLength = self.__avg_dyn_dp_sd_size
 
@@ -1036,7 +1095,7 @@ class Application:
         the service pin message.
 
         When ISI is in use and running, the method also issues an ISI DRUM
-        message unless supressed with a False drum argument."""
+        message unless suppressed with a False drum argument."""
         self._validate_thread()
         self._stack.send_service_message()
         if self.__isi and self.__isi.is_running() and drum:
@@ -1119,6 +1178,7 @@ class Application:
             0,
             pylon.device.stack.MAX_ADDRESSES, 'addresses'
         )
+        self.__auto_addresses = False
 
     def __set_aliases(self, v):
         self._validate_prestart_context()
@@ -1127,6 +1187,7 @@ class Application:
             0,
             pylon.device.stack.MAX_ALIASES, 'aliases'
         )
+        self.__auto_aliases = False
 
     def __set_bindable_mt(self, v):
         self._validate_prestart_context()
@@ -1243,13 +1304,28 @@ class Application:
     addresses = property(
         lambda self: self.__addresses,
         __set_addresses,
-        None, """The number of address table entries."""
+        None, """The number of address table entries.
+
+        Address table allocation occurs automatically as datapoint objects are
+        created, using an estimation of the required number of address table
+        records as a function of the number of applicable resources.
+
+        You can override this process at any time before calling the start()
+        method. Note that you should always allocate at least 15 address table
+        entries."""
     )
 
     aliases = property(
         lambda self: self.__aliases,
         __set_aliases,
-        None, """The number of alias table entries."""
+        None, """The number of alias table entries.
+
+        Alias allocation occurs automatically as datapoint objects are
+        created, using an estimation of the required number of aliases as a
+        function of the number of applicable resources.
+
+        You can override this process at any time before calling the start()
+        method."""
     )
 
     datapoints = property(
@@ -1321,16 +1397,24 @@ class Application:
         The device URI is a string which describes how the stack connects to
         the network. The general form of the pilon device URI is
 
-        //ipv4-addr:port/mode
+        uc://ipv4-addr:port
 
-        where
+        for use with a unicast channel, where
 
         ipv4-addr   is a valid IPv4 address,
         port        is a valid and free port number,
-        mode        is UC or MC for unicast or multicast mode, respectively.
 
-        For example, "//10.0.1.23:1628/uc" is a valid device URI for unicast
-        IP-C mode."""
+        For example, "uc://10.0.1.23:1628" is a valid device URI for unicast
+        mode.
+
+        For use with multicast mode, you must specify the local IP address to
+        listen to, and the broadcast address, using this general form:
+
+        mc://<listen-address>,<broadcast-address>:<port>
+
+        For example, "mc://10.0.1.23,10.0.255.254:1628" is a valid device URI
+        for multicast mode.
+        """
     )
 
     persistence_path = property(
@@ -1531,6 +1615,8 @@ class Application:
             if name[0].isdigit():
                 name = '_' + name
 
+            name = name[:16]    # no more than 16 characters!
+
             if name in names:
                 # Use the name as far as possible, and make it unique by adding
                 # a counter. Clip the name as much as necessary, but no more.
@@ -1539,15 +1625,18 @@ class Application:
 
                 newname = name[:16-width] + str(number)
                 names[name] = 1 + number
-                logger.info(
-                    'Mangled external name {0} to {1}'.format(
-                        intended,
-                        newname
-                    )
-                )
                 name = newname
             else:
                 names[name] = 1
+
+            if name != intended:
+                logger.info(
+                    'Mangled external name {0} to {1}'.format(
+                        intended,
+                        name
+                    )
+                )
+
             return name
         else:
             return intended
@@ -1592,7 +1681,19 @@ class Application:
             object_type=interface.Datapoint,
             data=datatype(),
             flags=flags,
-            name=member.name
+            name=self.__ext_name_mangle(
+                self.__dp_names,
+                member.name
+            )
+        )
+
+        dpi = dp.get_data_item()
+        self._apply_bytes(
+            dpi,
+            member._minimum,
+            member._maximum,
+            member._invalid,
+            None
         )
 
         # register datapoint, member block with each other:
@@ -1626,7 +1727,7 @@ class Application:
         member      The profile member to be implemented
         block       The related block
         applies_to  The item to which the property applies
-        donor       Resolves type-inheriting properties
+        donor       Resolves type-inheriting properties, can be None
         """
         declared_type = member.datatype()
 
@@ -1656,7 +1757,19 @@ class Application:
             object_type=interface.PropertyDatapoint,
             data=datatype_object,
             flags=flags,
-            name=member.name
+            name=self.__ext_name_mangle(
+                self.__dp_names,
+                member.name
+            )
+        )
+
+        dpi = dp.get_data_item()
+        self._apply_bytes(
+            dpi,
+            member._minimum,
+            member._maximum,
+            member._invalid,
+            member._default
         )
 
         dp._flags = member._flags | base.PropertyFlags.NONE
@@ -1724,7 +1837,7 @@ class Application:
             interface.Datapoint.CONFIG_CLASS
 
         if expose_name:
-            ext_name = self.__ext_name_mangle(self.__dp_names, name)
+            ext_name = name
         else:
             ext_name = None
 
