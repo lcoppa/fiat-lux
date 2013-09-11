@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 -tt
 
 """ Pilon application
     Controls RGB LEDs via network datapoints (color and brightness) and
@@ -22,11 +22,13 @@ import time
 import select
 import socket
 import sys
+import colorsys
 
 # Import Pilon
 import pylon.device
 
 # IP-C datapoint types used by this application
+from pylon.resources.SNVT_count import SNVT_count
 from pylon.resources.SNVT_switch import SNVT_switch
 #from pylon.resources.SNVT_temp_p import SNVT_temp_p
 #from pylon.resources.SCPTnwrkCnfg import SCPTnwrkCnfg
@@ -56,6 +58,12 @@ GREEN_LED_PWM_CHANNEL = 1               # Used by the LED object
 BLUE_LED_PWM_CHANNEL = 2                # Used by the LED object
 LED_OFFSET = 3                          # Used by the LED object
 MAX_LEDs = 4                            # Number of hw LEDs supported
+MIN_BRIGHTNESS_LEVEL = 0                # used in HLS color space
+MAX_BRIGHTNESS_LEVEL = 255              # used in HLS color space
+DIMMABLE_LED_INDEX = 0                  # let's dim only one LED
+PRESSURE_VALUE_DELTA = 50               # pressure send on delta
+LUMINANCE = 1                           # index for luminance value in HLS tuple
+
 
 ################################################W############################
 # Main function
@@ -67,7 +75,7 @@ def main():
     # Print startup message
     print('Welcome to the Pilon FiatLux application.')
     print('\n'
-          'Initializing...')
+            'Initializing...')
 
     ########################
     # Command line arguments
@@ -147,13 +155,12 @@ def main():
             print("Cannot find the LED light controller.")
             print(e)
 
-    # Enable/disable test mode
-    pylon.device.stack.test_mode = arguments.test
-
-
     ################
     # init Pilon app
     ################
+
+    # Enable/disable test mode
+    pylon.device.stack.test_mode = arguments.test
 
     # Create and configure the IP-C application object
     app = pylon.device.application.Application(
@@ -179,24 +186,28 @@ def main():
     def on_service_led(sender, arguments):
         logger.info('Processing service LED status event')
         print('Service LED status changed to {0}.'.format(arguments.state))
+        show_prompt()
     app.OnServiceLed += on_service_led
 
     # noinspection PyUnusedLocal
     def on_wink(sender, arguments):
         logger.info('Received wink message')
         print('Wink.')
+        show_prompt()
     app.OnWink += on_wink
 
     # noinspection PyUnusedLocal
     def on_online(sender, argument):
         logger.info('Received Online event')
         print('We are now online.')
+        show_prompt()
     app.OnOnline += on_online
 
     # noinspection PyUnusedLocal
     def on_offline(sender, argument):
         logger.info('Received Offline event')
         print('We are now offline.')
+        show_prompt()
     app.OnOffline += on_offline
 
     ###################
@@ -208,24 +219,44 @@ def main():
         pressure_sensor_block = app.block(
              profile = SFPTopenLoopSensor(),
              ext_name = 'FPPressureSensor',
-             snvt_xxx = SNVT_switch)
+             snvt_xxx = SNVT_count)
 
-    # LED block
+    # LED blocks: tuples of blocks, one for each physical LED
     if not arguments.legacy:
-        # Create the LED block using the new IoT Load Control block
-        led_iot_block = tuple(app.block(
-            profile = UFPTiotLoad(),
-            ext_name = 'Color Lamp') for i in range(MAX_LEDs))
-        # Create the power monitor block
-        power_monitor_iot_block = tuple(app.block(
-            profile = UFPTiotAnalogInput(),
-            ext_name = 'Lamp Power Monitor') for i in range(MAX_LEDs))
-        # Create the energy monitor block
-        energy_monitor_iot_block = tuple(app.block(
-            profile = UFPTiotAnalogInput(),
-            ext_name = 'Lamp Energy Monitor') for i in range(MAX_LEDs))
+        # Create the LED blocks using the new IoT Load Control block
+        led_iot_block = tuple(
+            app.block(profile = UFPTiotLoad(), 
+                        ext_name = 'Color Lamp') 
+            for i in range(MAX_LEDs))
+        # give each member of the tuple a size and index for later referencing
+        for block_index in range(len(led_iot_block)):
+            led_iot_block[block_index].array_size = len(led_iot_block)
+            led_iot_block[block_index].array_index = block_index
+    
+        # Create the power monitor blocks
+        power_monitor_iot_block = tuple(
+            app.block(profile = UFPTiotAnalogInput(),
+                        ext_name = 'Lamp Power Monitor') 
+            for i in range(MAX_LEDs))
+        # give each member of the tuple a size and index for later referencing
+        for block_index in range(len(power_monitor_iot_block)):
+            power_monitor_iot_block[block_index].array_size = \
+                len(power_monitor_iot_block)
+            power_monitor_iot_block[block_index].array_index = block_index
+
+        # Create the energy monitor blocks
+        energy_monitor_iot_block = tuple(
+            app.block(profile = UFPTiotAnalogInput(),
+                        ext_name = 'Lamp Energy Monitor') 
+            for i in range(MAX_LEDs))
+        # give each member of the tuple a size and index for later referencing
+        for block_index in range(len(energy_monitor_iot_block)):
+            energy_monitor_iot_block[block_index].array_size = \
+                len(energy_monitor_iot_block)
+            energy_monitor_iot_block[block_index].array_index = block_index
+
     else:
-        # Create functional blocks based on legacy profiles
+        # Legacy mode: create functional blocks based on legacy profiles
         # Use our RGB LED as a standard white light
         led_legacy_block = app.block(
             profile = SFPTopenLoopActuator(),
@@ -244,47 +275,138 @@ def main():
 
     # Define the on update handler for the IoT Load Control
     # nviLoadControl input
-    if not arguments.legacy:
+    if not arguments.legacy:     
         def on_led_nvi_load_control_update(sender, event_data):
             logger.info('Processing network variable update'
-                        ' {0}'.format(sender))
-            print('Block index {0}'.format(sender.index))
-
-            # Require RBG encoding (for now)
-            if (not sender.data.color.encoding ==
-                color_encoding_t.COLOR_RGB):
-                print("Use RGB encoding only in nviLoadControl")
-                return
+                                    ' {0}'.format(sender))
 
             try:
                 with sender:
+
+                    # get the index of the block to access the correct
+                    # element of the tuple of blocks 
+                    block_index = sender._block.array_index
+                    print('Block index {0}'.format(block_index))
+
+                    # variables with short name for convenience
+                    new_state = sender.data.state
+                    #old_state = led_iot_block[block_index].nvoLoadStatus.data.state 
+                    new_red = sender.data.color.color_value.RGB.red
+                    new_green = sender.data.color.color_value.RGB.green
+                    new_blue = sender.data.color.color_value.RGB.blue
+                    old_red = led_iot_block[block_index].nvoLoadStatus.data.color.color_value.RGB.red
+                    old_green = led_iot_block[block_index].nvoLoadStatus.data.color.color_value.RGB.green
+                    old_blue = led_iot_block[block_index].nvoLoadStatus.data.color.color_value.RGB.blue
+                    new_brightness = sender.data.level
+                    old_brightness = led_iot_block[block_index].nvoLoadStatus.data.level
+
+            
+            
+                    # Require RGB encoding (for now)
+                    if (not sender.data.color.encoding ==
+                        color_encoding_t.COLOR_RGB):
+                        print("Use RGB encoding only in nviLoadControl")
+                        show_prompt()
+                        return
+
+
                     # Act on input
                     if arguments.color:
-                        # Real LEDs available -- turn them on or off
-                        this_led.set_led_level(
-                            RED_LED_PWM_CHANNEL + (sender.index * LED_OFFSET),
-                            sender.data.color.color_value.RGB.red)
-                        this_led.set_led_level(
-                            GREEN_LED_PWM_CHANNEL + (sender.index * LED_OFFSET),
-                            sender.data.color.color_value.RGB.green)
-                        this_led.set_led_level(
-                            BLUE_LED_PWM_CHANNEL + (sender.index * LED_OFFSET),
-                            sender.data.color.color_value.RGB.blue)
-                    # Send feedback
-                    # TODO: process the input before sending instead of
-                    # sending it as feedback
-                    # led_iot_block.nvoLoadStatus.data = \
-                    # led_iot_block.nviLoadControl.data
+                        # Real LEDs available
+
+                        # NOTE:
+                        # nviLoadControl contains info about both brightness 
+                        # ('level') and color ('color'); the problem is that 
+                        # color implies brightness in all color encodings 
+                        # used (RGB or CIE 1931); so we change brightness only 
+                        # if color stays the the same
+
+                        # if the state is off turn everything off
+                        if new_state == False:
+                            # turn off the LED
+                            set_rgb_color(0, 0, 0, this_led, block_index)
+
+                            # Send feedback
+                            # 1:1 copy of the input is propagated
+                            # leave the RGB and brightness output as they are
+                            led_iot_block[block_index].nvoLoadStatus.data = \
+                            led_iot_block[block_index].nviLoadControl.data
+
+                        # if any of the three color values changed compared to 
+                        # what's saved in the output datapoint
+                        elif (new_red != old_red or new_green != old_green or 
+                            new_blue != old_blue):
+                            # set the new color
+                            set_rgb_color(new_red, new_green, new_blue,
+                                this_led, block_index)
+
+                            # new RGB values mean new brightness level
+                            # so in the o/p dp we want to update it:
+                            # translate this new RGB value to HLS space 
+                            hls_colors = colorsys.rgb_to_hls(new_red, new_green, new_blue)
+                            # get the second value of the tuple (=brightness)
+                            new_brightness = hls_colors[LUMINANCE]
+
+                            # Send feedback: this will propagate twice!!
+                            led_iot_block[block_index].nvoLoadStatus.data = \
+                            led_iot_block[block_index].nviLoadControl.data
+                            # TODO: how to update a field of the output dp without 
+                            # propagating it to the network?
+                            led_iot_block[block_index].nvoLoadStatus.data.level = new_brightness
+
+                            # now I should propagate!!!
+
+                        elif new_brightness != old_brightness:
+                            # the color is the same
+                            # change brightness only
+
+                            # make sure the new brightness is within boundaries
+                            new_brightness = max(new_brightness, MIN_BRIGHTNESS_LEVEL)
+                            new_brightness = min(new_brightness, MAX_BRIGHTNESS_LEVEL)
+
+                            # translate the old RGB value to HLS space 
+                            hls_colors = colorsys.rgb_to_hls(new_red, new_green, new_blue)
+
+                            # update brightness (=luminance=L) in HLS color space
+                            # Lumnance is the second member of the tuple
+                            hls_colors[LUMINANCE] = new_brightness
+
+                            # reconvert new brightness to RGB color space
+                            (new_red, new_green, new_blue) = \
+                                colorsys.hls_to_rgb(
+                                    old_red,
+                                    old_green,
+                                    old_blue)
+
+                            # set new brightness as RGB color
+                            set_rgb_color(new_red, new_green, new_blue, 
+                                this_led, block_index)
+
+                            # Send feedback
+                            led_iot_block[block_index].nvoLoadStatus.data = \
+                            led_iot_block[block_index].nviLoadControl.data
+                        
+                        # if everything is the same
+                        else:
+                            # just set the color 
+                            set_rgb_color(new_red, new_green, new_blue, 
+                                this_led, block_index)
+                            # Send feedback
+                            led_iot_block[block_index].nvoLoadStatus.data = \
+                            led_iot_block[block_index].nviLoadControl.data
+                    
                     print("LED {0} input is control {1}, state {2}, "
-                          "level {3}".format(
-                              i,
-                              sender.data.control,
-                              sender.data.state,
-                              sender.data.level))
+                                "level {3}".format(
+                                    i,
+                                    sender.data.control,
+                                    sender.data.state,
+                                    sender.data.level))
             except Exception as e:
                 print('Something just went wrong when updating RGB values '
-                      'in on_led_nvi_load_control_update({0}):'
-                      '{1}'.format(sender, e))
+                            'in on_led_nvi_load_control_update({0}):'
+                            '{1}'.format(sender, e))
+            finally:
+                show_prompt()
         # Create the on update handler for the nviValue input
         for i in range(0, MAX_LEDs):
             led_iot_block[i].nviLoadControl.OnUpdate += \
@@ -294,7 +416,7 @@ def main():
     if arguments.legacy:
         def on_legacy_led_nvi_value_update(sender, event_data):
             logger.info('Processing network variable update'
-                        ' {0}'.format(sender))
+                                    ' {0}'.format(sender))
 
             try:
                 with led_legacy_block.nviValue:
@@ -318,16 +440,18 @@ def main():
                             BLUE_LED_PWM_CHANNEL, brightness)
 
                         print("LED has now value {0}, state {1}".format(
-                              led_legacy_block_fb.nviValue.data.value,
-                              led_legacy_block_fb.nviValue.data.state))
+                                led_legacy_block_fb.nviValue.data.value,
+                                led_legacy_block_fb.nviValue.data.state))
 
                     # Propagate feedback even if no real LED is present
                     led_legacy_block_fb.nvoValue.data = \
                     led_legacy_block.nviValue.data
             except Exception as e:
                 print('Something just went wrong in '
-                      'on_legacy_led_nvi_value_update({0}):'
-                      '{1}'.format(sender, e))
+                        'on_legacy_led_nvi_value_update({0}):'
+                        '{1}'.format(sender, e))
+            finally:
+                show_prompt()
         # Create the on update handler for the nviValue input
         led_legacy_block.nviValue.OnUpdate += on_legacy_led_nvi_value_update
 
@@ -367,14 +491,15 @@ def main():
         print("Pressure sensor hardware disabled.")
     if not arguments.legacy:
         print("Control both color and dimming via the network using the "
-              "IoT Load block.")
+                "IoT Load block.")
     else:
         print("Control both color and dimming via the network using the "
-              "Actuator block.")
+                "Actuator block.")
     print("...initialization done.")
     print("\n"
-          "Enter 'exit' to exit, or 'service' to send a Service message."
-          "\n")
+            "Enter 'exit' to exit, 'wink' to wink the device "
+            "or 'service' to send a Service message.")
+    show_prompt()
 
     ###########
     # Main loop
@@ -389,9 +514,7 @@ def main():
             #   Interactive user input
             #
 
-            # prompt
-            sys.stdout.write(">")
-            sys.stdout.flush()
+            # read user input
             i, o, e = select.select([sys.stdin], [], [], 0.01)
             if i:
                 try:
@@ -401,71 +524,120 @@ def main():
                     elif selection == 'service':
                         app.send_service_message()
                         print('Service message sent')
+                        show_prompt()
                     elif selection == 'wink':
                         # Simulate receipt of a Wink message for testing:
                         app.OnWink.fire(app, None)
+                        show_prompt()
                     else:
                         print('Valid commands are "exit", "service", "wink"')
-                        sys.stdout.write(">")
-                        sys.stdout.flush()
+                        show_prompt()
                 except Exception as e:
                     print(e)
-
+                    show_prompt()
+                    
             #
             #   Pressure sensor input
             #
             # TODO: move to a separate thread
             if arguments.sensor:
-                # Read pressure value
+                # Read pressure value: more pressure == smaller value
                 pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
 
-                # Start by dimming down (if possible)
-                dimming_down = True
+                # if pressure is high and the dimmable led is on
+                if (pressure < PRESSURE_DIMMING_THRESHOLD and 
+                    led_iot_block[DIMMABLE_LED_INDEX].nviLoadControl.data.state):
 
-                # Cycle LED brightness until user presses the sensor
-                # TODO: make dimming proportional to pressure level
-                while pressure < PRESSURE_DIMMING_THRESHOLD:
-                    if arguments.legacy:
-                        # TODO
-                        pass
-                    if not arguments.legacy:
-                        # Read latest dimming level for RGB LED as percentages
-                        r_dimming_level = led_legacy_block.nviValue.data.value
-                        g_dimming_level = led_legacy_block.nviValue.data.value
-                        b_dimming_level = led_legacy_block.nviValue.data.value
+                    # Start by dimming down (if possible)
+                    dimming_down = True
+                    pressure_detected = True
 
-                        # Reduce dimming until color is zero, then back up
-                        if r_dimming_level > 0 and r_dimming_level < 100:
+                    # Cycle LED brightness until user presses the sensor
+                    # TODO: make dimming proportional to pressure level
+                    while pressure < PRESSURE_DIMMING_THRESHOLD:
+
+                        # let Pilon run its course
+                        app.service()
+
+                        if arguments.legacy:
+                            # TODO
+                            # r_dimming_level = led_legacy_block.nviValue.data.value
+                            # g_dimming_level = led_legacy_block.nviValue.data.value
+                            # b_dimming_level = led_legacy_block.nviValue.data.value
+
+                            pass
+
+                        # if we have real LEDs and iot mode
+                        if (not arguments.legacy) and arguments.color:
+
+                            # Read latest color RGB LED (which implies brightness)
+                            old_red = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.red
+                            old_green = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.green
+                            old_blue = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.blue
+
+                            # get brightness of latest RGB values from HLS space 
+                            hls_colors = colorsys.rgb_to_hls(old_red, old_green, old_blue)
+                            new_brightness = hls_colors[LUMINANCE]
+
+                            # start changing brightness up or down
                             if dimming_down:
-                                # Down
-                                r_dimming_level -= 1
+                                # dim down
+                                new_brightness = max(MIN_BRIGHTNESS_LEVEL, new_brightness-1)
+                                # until brightness is minimum
+                                if new_brightness == MIN_BRIGHTNESS_LEVEL:
+                                    dimming_down = False
                             else:
-                                # Up
-                                r_dimming_level += 1
-                            if arguments.color:
-                                # Set the LED brightness
-                                this_led.set_led_level(RED_LED_PWM_CHANNEL,
-                                                    r_dimming_level)
-                            time.sleep(0.2)
+                                # dim up
+                                new_brightness = min(MAX_BRIGHTNESS_LEVEL, new_brightness+1)
+                                # until brightness is max
+                                if new_brightness == MAX_BRIGHTNESS_LEVEL:
+                                    dimming_down = True
 
-                        if r_dimming_level == 0:
-                            # At bottom--dim up again
-                            dimming_down = False
-                            r_dimming_level = 1
-                        elif r_dimming_level == 100:
-                            # At top--dim down again
-                            dimming_down = True
-                            r_dimming_level = 99
+                                time.sleep(0.2)
 
-                        # Update the corresponding NV
-                        # led_block = r_dimming_level
+                            # update brightness (=luminance=L) in HLS color space
+                            # Lumnance is the second member of the tuple
+                            hls_colors[LUMINANCE] = new_brightness
+
+                            # reconvert new brightness to RGB color space
+                            (new_red, new_green, new_blue) = \
+                                colorsys.hls_to_rgb(
+                                    old_red,
+                                    old_green,
+                                    old_blue)
+
+                            # set new brightness as RGB color
+                            set_rgb_color(new_red, new_green, new_blue, 
+                                this_led, DIMMABLE_LED_INDEX)
+
+
+                        # update pressure reading
+                        old_pressure = pressure
+                        pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
+                        # if difference is greater than a given delta, do dp update
+                        if abs(pressure - old_pressure) > PRESSURE_VALUE_DELTA:
+                            pressure_sensor_block.nvoValue.value = pressure
+
+
+                    # Send feedback only if pressure sensors changed LED brightness
+                    if pressure_detected:
+                        led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.level = \
+                            new_brightness
+                        led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.red = \
+                            new_red
+                        led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.green = \
+                            new_green
+                        led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.blue = \
+                            new_blue
+                        pressure_detected = False
+
 
             #pdb.set_trace()
 
     finally:
         # Stop the IP-C application
         print("\n"
-              "Winding down...")
+                "Winding down...")
         app.stop()
         if arguments.sensor:
             # Close GPIO
@@ -495,6 +667,33 @@ def this_pi_ip_addr():
         print("Can't get IP address")
         print(e)
 ### End this_pi_ip_addr function ###
+
+
+def show_prompt():
+    """ Show a prompt for user input """
+    
+    # go to beginning of line, print the prompt
+    sys.stdout.write("\r> ")
+    # stay on this line
+    sys.stdout.flush()
+### end show_prompt function ###
+
+
+def set_rgb_color(r, g, b, led_obj, led_index):
+    """ Set RGB values for the specified LED
+    """
+    led_obj.set_led_level(
+        RED_LED_PWM_CHANNEL + (led_index * LED_OFFSET),
+        r)
+    led_obj.set_led_level(
+        GREEN_LED_PWM_CHANNEL + (led_index * LED_OFFSET),
+        g)
+    led_obj.set_led_level(
+        BLUE_LED_PWM_CHANNEL + (led_index * LED_OFFSET),
+        b)
+### end set_rgb_color() ####
+
+
 
 if __name__ == '__main__':
     main()
