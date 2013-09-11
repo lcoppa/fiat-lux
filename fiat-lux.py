@@ -23,6 +23,7 @@ import select
 import socket
 import sys
 import colorsys
+import pdb
 
 # Import Pilon
 import pylon.device
@@ -49,7 +50,7 @@ from fsr_read.pressure_sensor import PRESSURE_SENSOR
 
 # Constants
 PRESSURE_SENSOR_PIN = 18                # Used by the PRESSURE object
-PRESSURE_DIMMING_THRESHOLD = 2000       # Pressure reading below which we cycle
+PRESSURE_DIMMING_THRESHOLD = 1000       # Pressure reading below which we cycle
                                         # LED brightness
 PWM_BOARD_I2C_ADDRESS = 0x40            # Used by the LED object
 PWM_FREQ = 1000                         # In Hz, used by the LED object
@@ -62,8 +63,9 @@ MIN_BRIGHTNESS_LEVEL = 0                # used in HLS color space
 MAX_BRIGHTNESS_LEVEL = 255              # used in HLS color space
 DIMMABLE_LED_INDEX = 0                  # let's dim only one LED
 PRESSURE_VALUE_DELTA = 50               # pressure send on delta
+HUE = 0                                 # index for hue value in HLS tuple
 LUMINANCE = 1                           # index for luminance value in HLS tuple
-
+SATURATION = 2                          # index for saturation value in HLS tuple
 
 ################################################W############################
 # Main function
@@ -86,7 +88,7 @@ def main():
         description="The Pilon LED demo script")
     parser.add_argument(
         '-c', '--color',
-        default=False,
+        default=True,
         action='store_true',
         help='Enable RGB LED hardware')
     parser.add_argument(
@@ -118,7 +120,7 @@ def main():
         help='The colon-separated program ID')
     parser.add_argument(
         '-s', '--sensor',
-        default=False,
+        default=True,
         action='store_true',
         help='Enable pressure sensor hardware')
     parser.add_argument(
@@ -138,10 +140,12 @@ def main():
     # Create the pressure sensor object if the hardware is attached
     if arguments.sensor:
         try:
-            pressure_sensor = PRESSURE_SENSOR()
+            pressure_sensor = PRESSURE_SENSOR() #arguments.debug)
         except Exception as e:
             print("Cannot find the pressure sensor.")
             print(e)
+            # disable pressure sensor
+            arguments.sensor = False
 
     # Create the LED controller if the PWM hardware is attached
     if arguments.color:
@@ -149,11 +153,14 @@ def main():
         # changed in the constants above; check out the tutorial here
         # learn.adafruit.com/adafruit-16-channel-servo-driver-with-raspberry-pi
         try:
+            import pdb; pdb.set_trace()  # XXX BREAKPOINT
             this_led = LED(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, True)
             pass
         except Exception as e:
             print("Cannot find the LED light controller.")
             print(e)
+            # disable color led
+            arguments.color = False
 
     ################
     # init Pilon app
@@ -192,14 +199,14 @@ def main():
     # noinspection PyUnusedLocal
     def on_wink(sender, arguments):
         logger.info('Received wink message')
-        print('Wink.')
+        print('Wink!')
         show_prompt()
     app.OnWink += on_wink
 
     # noinspection PyUnusedLocal
     def on_online(sender, argument):
         logger.info('Received Online event')
-        print('We are now online.')
+        print('We are now online!')
         show_prompt()
     app.OnOnline += on_online
 
@@ -223,7 +230,9 @@ def main():
 
     # LED blocks: tuples of blocks, one for each physical LED
     if not arguments.legacy:
+        #
         # Create the LED blocks using the new IoT Load Control block
+        #
         led_iot_block = tuple(
             app.block(profile = UFPTiotLoad(),
                         ext_name = 'Color Lamp')
@@ -233,7 +242,9 @@ def main():
             led_iot_block[block_index].array_size = len(led_iot_block)
             led_iot_block[block_index].array_index = block_index
 
+        #
         # Create the power monitor blocks
+        #
         power_monitor_iot_block = tuple(
             app.block(profile = UFPTiotAnalogInput(),
                         ext_name = 'Lamp Power Monitor')
@@ -244,7 +255,9 @@ def main():
                 len(power_monitor_iot_block)
             power_monitor_iot_block[block_index].array_index = block_index
 
+        #
         # Create the energy monitor blocks
+        #
         energy_monitor_iot_block = tuple(
             app.block(profile = UFPTiotAnalogInput(),
                         ext_name = 'Lamp Energy Monitor')
@@ -256,7 +269,10 @@ def main():
             energy_monitor_iot_block[block_index].array_index = block_index
 
     else:
+        #
         # Legacy mode: create functional blocks based on legacy profiles
+        #
+
         # Use our RGB LED as a standard white light
         led_legacy_block = app.block(
             profile = SFPTopenLoopActuator(),
@@ -282,7 +298,6 @@ def main():
 
             try:
                 with sender:
-
                     # get the index of the block to access the correct
                     # element of the tuple of blocks
                     block_index = sender._block.array_index
@@ -300,15 +315,12 @@ def main():
                     new_brightness = sender.data.level
                     old_brightness = led_iot_block[block_index].nvoLoadStatus.data.level
 
-
-
                     # Require RGB encoding (for now)
                     if (not sender.data.color.encoding ==
                         color_encoding_t.COLOR_RGB):
                         print("Use RGB encoding only in nviLoadControl")
                         show_prompt()
                         return
-
 
                     # Act on input
                     if arguments.color:
@@ -480,6 +492,7 @@ def main():
                 app.uniqueId))
 
     # Display instructions
+    print('\n')
     if arguments.color:
         print("Color LED hardware enabled.")
     else:
@@ -513,6 +526,7 @@ def main():
             #
             #   Interactive user input
             #
+            #import pdb; pdb.set_trace()  # XXX BREAKPOINT
 
             # read user input
             i, o, e = select.select([sys.stdin], [], [], 0.01)
@@ -540,13 +554,18 @@ def main():
             #   Pressure sensor input
             #
             # TODO: move to a separate thread
-            if arguments.sensor:
+            elif arguments.sensor:
                 # Read pressure value: more pressure == smaller value
                 pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
+                # print to console if the sensor is being pushed
+                if pressure < PRESSURE_DIMMING_THRESHOLD:
+                    print("Pressure is: " + str(pressure))
+                    show_prompt()
 
-                # if pressure is high and the dimmable led is on
+                # if pressure is high enough and there is a dimmable led
                 if (pressure < PRESSURE_DIMMING_THRESHOLD and
-                    led_iot_block[DIMMABLE_LED_INDEX].nviLoadControl.data.state):
+                    arguments.color):
+                        #and led_iot_block[DIMMABLE_LED_INDEX].nviLoadControl.data.state):
 
                     # Start by dimming down (if possible)
                     dimming_down = True
@@ -564,11 +583,10 @@ def main():
                             # r_dimming_level = led_legacy_block.nviValue.data.value
                             # g_dimming_level = led_legacy_block.nviValue.data.value
                             # b_dimming_level = led_legacy_block.nviValue.data.value
-
                             pass
 
                         # if we have real LEDs and iot mode
-                        if (not arguments.legacy) and arguments.color:
+                        else:
 
                             # Read latest color RGB LED (which implies brightness)
                             old_red = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.red
@@ -595,16 +613,11 @@ def main():
 
                                 time.sleep(0.2)
 
-                            # update brightness (=luminance=L) in HLS color space
-                            # Lumnance is the second member of the tuple
-                            hls_colors[LUMINANCE] = new_brightness
-
-                            # reconvert new brightness to RGB color space
+                            # reconvert HLS with new brightness to RGB color space
                             (new_red, new_green, new_blue) = \
-                                colorsys.hls_to_rgb(
-                                    old_red,
-                                    old_green,
-                                    old_blue)
+                                colorsys.hls_to_rgb(hls_colors[HUE],
+                                                    new_brightness,
+                                                    hls_colors[SATURATION])
 
                             # set new brightness as RGB color
                             set_rgb_color(new_red, new_green, new_blue,
