@@ -1,0 +1,71 @@
+[
+{
+    "pk": 1, 
+    "model": "auth.group", 
+    "fields": {
+        "name": "Users", 
+        "permissions": [
+            5, 
+            2
+        ]
+    }
+},
+{
+    "pk": 1, 
+    "model": "auth.user", 
+    "fields": {
+        "username": "admin", 
+        "first_name": "Administrator", 
+        "last_name": "", 
+        "is_active": true, 
+        "is_superuser": true, 
+        "is_staff": true, 
+        "last_login": "2013-08-13T23:22:10.795Z", 
+        "groups": [], 
+        "user_permissions": [], 
+        "password": "pbkdf2_sha256$10000$rCeM7tmnmMWY$Eg4QfbBiU6mMqCWBtqFscXMM3vWN277VftgCCkVzvn4=", 
+        "email": "garyb@echelon.com", 
+        "date_joined": "2013-06-10T22:40:34Z"
+    }
+},
+{
+    "pk": 2, 
+    "model": "auth.user", 
+    "fields": {
+        "username": "garyb", 
+        "first_name": "Gary", 
+        "last_name": "Bartlett", 
+        "is_active": true, 
+        "is_superuser": false, 
+        "is_staff": true, 
+        "last_login": "2013-07-30T20:34:06Z", 
+        "groups": [
+            1
+        ], 
+        "user_permissions": [], 
+        "password": "pbkdf2_sha256$10000$KWpimmLZR9UY$SyJsLScz7KiqbV26Nuki6sKCtXLS5V3W5upHGVbWENk=", 
+        "email": "garyb@echelon.com", 
+        "date_joined": "2013-06-12T22:38:45Z"
+    }
+},
+{
+    "pk": 3, 
+    "model": "auth.user", 
+    "fields": {
+        "username": "pi", 
+        "first_name": "Raspberry", 
+        "last_name": "Pi", 
+        "is_active": true, 
+        "is_superuser": false, 
+        "is_staff": false, 
+        "last_login": "2013-08-15T16:57:04.743Z", 
+        "groups": [
+            1
+        ], 
+        "user_permissions": [], 
+        "password": "pbkdf2_sha256$10000$VprWnrMdnx2E$028/9W24yY1fdgfuaa26Y/EfvVKSwimD1Tn3jcG7oGw=", 
+        "email": "", 
+        "date_joined": "2013-07-30T20:35:35Z"
+    }
+}
+]
