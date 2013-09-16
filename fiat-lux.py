@@ -79,7 +79,8 @@ def main():
     # Print startup message
     print('Welcome to the Pilon FiatLux application.')
     print('\n'
-          'Initializing...')
+          'Initializing...'
+          '\n')
 
     ########################
     # Command line arguments
@@ -478,6 +479,7 @@ def main():
 
     # Start the IP-C application
     app.start()
+    app.service()
 
     # Display configuration
     if arguments.test:
@@ -492,23 +494,24 @@ def main():
                 app.uniqueId))
 
     # Display instructions
-    print('\n')
+    #print('\n')
     if arguments.color:
         print("Color LED hardware enabled.")
     else:
-        print("Color LED hardware disabled.")
+        print("* Color LED hardware DISABLED *")
     if arguments.sensor:
         print("Pressure sensor hardware enabled.")
         print("Press the pressure sensor to regulate LED dimming only.")
     else:
-        print("Pressure sensor hardware disabled.")
+        print("* Pressure sensor hardware DISABLED *")
     if not arguments.legacy:
         print("Control both color and dimming via the network using the "
               "IoT Load block.")
     else:
         print("Control both color and dimming via the network using the "
               "Actuator block.")
-    print("...initialization done.")
+    print("\n"
+          "...done.")
     print("\n"
           "Enter 'exit' to exit, 'wink' to wink the device "
           "or 'service' to send a Service message.")
