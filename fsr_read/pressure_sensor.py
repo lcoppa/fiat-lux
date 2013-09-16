@@ -14,6 +14,7 @@ import time
 import RPi.GPIO as GPIO
 
 NO_PRESSURE = 10000             # count value for zero pressure
+TEST_PIN = 0            # pin to read from to check if I can indeed read
 
 class PRESSURE_SENSOR:
 
@@ -23,6 +24,19 @@ class PRESSURE_SENSOR:
     def __init__(self, debug=False):
         self._debug = debug
         GPIO.setmode(GPIO.BCM)
+        # try reading from hw to generate exception on object creation
+        GPIO.output(TEST_PIN, GPIO.LOW)
+        # don't catch exception here, let it go to the caller
+
+    def test_sensor_ok(self):
+        """Do hardware check to see if we can read the sensor
+        """
+        try:
+            GPIO.output(TEST_PIN, GPIO.LOW)
+            return True
+        except Exception:
+            print("Cannot read hardware I/O (not running as root?)")
+            return False
 
     def read_pressure(self, pin):
         """Reads pressure sensor by RC timing
@@ -59,13 +73,13 @@ class PRESSURE_SENSOR:
             if self._debug:
                 print('Pressure is: ' + str(self.reading))
             return self.reading
-        except Exception as e:
-            print("Cannot read pressure sensor (not running as root?)")
-            print(e)
 
+        except Exception:
+            if self._debug:
+                print("Cannot read hardware I/O (not running as root?)")
+            return NO_PRESSURE
+    
     def cleanup(self):
         """Run GPIO library cleanup procedure
         """
         GPIO.cleanup()
-
-

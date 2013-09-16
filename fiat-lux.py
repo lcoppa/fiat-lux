@@ -143,9 +143,8 @@ def main():
         # changed in the constants above; check out the tutorial here
         # learn.adafruit.com/adafruit-16-channel-servo-driver-with-raspberry-pi
         try:
-            import pdb; pdb.set_trace()  # XXX BREAKPOINT
+            #import pdb; pdb.set_trace()  # XXX BREAKPOINT
             this_led = LED(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, True)
-            pass
         except Exception as e:
             print("Cannot find the LED light controller.")
             print(e)
@@ -556,7 +555,12 @@ def main():
             # TODO: move to a separate thread
             elif arguments.sensor:
                 # Read pressure value: more pressure == smaller value
-                pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
+                try:
+                    pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
+                except Exception as e:
+                    print("Cannot read pressure sensor (not running as root?)")
+                    print(e)
+    
                 # print to console if the sensor is being pushed
                 if pressure < PRESSURE_DIMMING_THRESHOLD:
                     print("Pressure is: " + str(pressure))
