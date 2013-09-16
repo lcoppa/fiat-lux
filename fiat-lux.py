@@ -137,16 +137,6 @@ def main():
     # init I/O
     ##########
 
-    # Create the pressure sensor object if the hardware is attached
-    if arguments.sensor:
-        try:
-            pressure_sensor = PRESSURE_SENSOR()     # arguments.debug)
-        except Exception as e:
-            print("Cannot find the pressure sensor.")
-            print(e)
-            # disable pressure sensor
-            arguments.sensor = False
-
     # Create the LED controller if the PWM hardware is attached
     if arguments.color:
         # Assume the PWM board for the LEDs is at address 0x40 if not
@@ -159,8 +149,19 @@ def main():
         except Exception as e:
             print("Cannot find the LED light controller.")
             print(e)
-            # disable color led
+            # disable color led and sensor
             arguments.color = False
+            arguments.sensor = False
+
+    # Create the pressure sensor object if the LED can be found
+    if arguments.sensor and arguments.color:
+        try:
+            pressure_sensor = PRESSURE_SENSOR()     # arguments.debug)
+        except Exception as e:
+            print("Cannot find the pressure sensor.")
+            print(e)
+            # disable pressure sensor
+            arguments.sensor = False
 
     ################
     # init Pilon app
