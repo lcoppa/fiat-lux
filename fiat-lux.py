@@ -62,6 +62,7 @@ MAX_LEDs = 4                            # Number of hw LEDs supported
 MIN_BRIGHTNESS_LEVEL = 0                # used in HLS color space
 MAX_BRIGHTNESS_LEVEL = 255              # used in HLS color space
 DIMMABLE_LED_INDEX = 0                  # let's dim only one LED
+DIMMING_STEP = 3                        # step value when dimming up or down
 PRESSURE_VALUE_DELTA = 50               # pressure send on delta
 HUE = 0                                 # index for hue value in HLS tuple
 LUMINANCE = 1                           # index for luminance value in HLS tuple
@@ -144,7 +145,7 @@ def main():
         # learn.adafruit.com/adafruit-16-channel-servo-driver-with-raspberry-pi
         try:
             #import pdb; pdb.set_trace()  # XXX BREAKPOINT
-            this_led = LED(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, True)
+            this_led = LED(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, arguments.debug)
         except Exception as e:
             print("Cannot find the LED light controller.")
             print(e)
@@ -152,13 +153,13 @@ def main():
             arguments.color = False
             arguments.sensor = False
 
-    # Create the pressure sensor object if the LED can be found
-    if arguments.sensor and arguments.color:
+    # Create the pressure sensor object
+    if arguments.sensor:
         try:
-            pressure_sensor = PRESSURE_SENSOR()     # arguments.debug)
+            pressure_sensor = PRESSURE_SENSOR(arguments.debug)
         except Exception as e:
             print("Cannot find the pressure sensor.")
-            #print(e)
+            print(e)
             # disable pressure sensor
             arguments.sensor = False
 
@@ -559,12 +560,12 @@ def main():
                     pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
                 except Exception as e:
                     print("Cannot read pressure sensor (not running as root?)")
-                    print(e)
-    
+                    print("Error: " + e)
+
                 # print to console if the sensor is being pushed
-                if pressure < PRESSURE_DIMMING_THRESHOLD:
-                    print("Pressure is: " + str(pressure))
-                    show_prompt()
+                # if pressure < PRESSURE_DIMMING_THRESHOLD:
+                #     print("Pressure is: " + str(pressure))
+                #     show_prompt()
 
                 # if pressure is high enough and there is a dimmable led
                 if (pressure < PRESSURE_DIMMING_THRESHOLD and
@@ -572,8 +573,16 @@ def main():
                         #and led_iot_block[DIMMABLE_LED_INDEX].nviLoadControl.data.state):
 
                     # Start by dimming down (if possible)
-                    dimming_down = True
-                    pressure_detected = True
+                    dimming_down = False
+
+                    # Read latest color RGB LED (which implies brightness)
+                    old_red = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.red
+                    old_green = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.green
+                    old_blue = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.blue
+
+                    # get brightness of latest RGB values from HLS space
+                    hls_colors = colorsys.rgb_to_hls(old_red, old_green, old_blue)
+                    new_brightness = hls_colors[LUMINANCE]
 
                     # Cycle LED brightness until user presses the sensor
                     # TODO: make dimming proportional to pressure level
@@ -581,6 +590,13 @@ def main():
 
                         # let Pilon run its course
                         app.service()
+
+                        # update pressure block on delta
+                        old_pressure = pressure
+                        pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
+                        # if difference is greater than a given delta, do dp update
+                        if abs(pressure - old_pressure) > PRESSURE_VALUE_DELTA:
+                            pressure_sensor_block.nvoValue.value = pressure
 
                         if arguments.legacy:
                             # TODO
@@ -591,31 +607,21 @@ def main():
 
                         # if we have real LEDs and iot mode
                         else:
-
-                            # Read latest color RGB LED (which implies brightness)
-                            old_red = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.red
-                            old_green = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.green
-                            old_blue = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.blue
-
-                            # get brightness of latest RGB values from HLS space
-                            hls_colors = colorsys.rgb_to_hls(old_red, old_green, old_blue)
-                            new_brightness = hls_colors[LUMINANCE]
-
                             # start changing brightness up or down
                             if dimming_down:
                                 # dim down
-                                new_brightness = max(MIN_BRIGHTNESS_LEVEL, new_brightness - 1)
+                                new_brightness = max(MIN_BRIGHTNESS_LEVEL, 
+                                    new_brightness - DIMMING_STEP)
                                 # until brightness is minimum
                                 if new_brightness == MIN_BRIGHTNESS_LEVEL:
                                     dimming_down = False
                             else:
                                 # dim up
-                                new_brightness = min(MAX_BRIGHTNESS_LEVEL, new_brightness + 1)
+                                new_brightness = min(MAX_BRIGHTNESS_LEVEL, 
+                                    new_brightness + DIMMING_STEP)
                                 # until brightness is max
                                 if new_brightness == MAX_BRIGHTNESS_LEVEL:
                                     dimming_down = True
-
-                                time.sleep(0.2)
 
                             # reconvert HLS with new brightness to RGB color space
                             (new_red, new_green, new_blue) = \
@@ -627,24 +633,15 @@ def main():
                             set_rgb_color(new_red, new_green, new_blue,
                                 this_led, DIMMABLE_LED_INDEX)
 
-                        # update pressure reading
-                        old_pressure = pressure
-                        pressure = pressure_sensor.read_pressure(PRESSURE_SENSOR_PIN)
-                        # if difference is greater than a given delta, do dp update
-                        if abs(pressure - old_pressure) > PRESSURE_VALUE_DELTA:
-                            pressure_sensor_block.nvoValue.value = pressure
-
-                    # Send feedback only if pressure sensors changed LED brightness
-                    if pressure_detected:
-                        led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.level = \
-                            new_brightness
-                        led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.red = \
-                            new_red
-                        led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.green = \
-                            new_green
-                        led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.blue = \
-                            new_blue
-                        pressure_detected = False
+                    # Update output LED functional block
+                    led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.level = \
+                        new_brightness
+                    led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.red = \
+                        new_red
+                    led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.green = \
+                        new_green
+                    led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.blue = \
+                        new_blue
 
             #pdb.set_trace()
     finally:
@@ -693,17 +690,17 @@ def show_prompt():
 
 
 def set_rgb_color(r, g, b, led_obj, led_index):
-    """ Set RGB values for the specified LED
+    """ Set RGB 0-255 values for the specified LED
     """
     led_obj.set_led_level(
         RED_LED_PWM_CHANNEL + (led_index * LED_OFFSET),
         r)
     led_obj.set_led_level(
         GREEN_LED_PWM_CHANNEL + (led_index * LED_OFFSET),
-        g)
+        0)  #g)
     led_obj.set_led_level(
         BLUE_LED_PWM_CHANNEL + (led_index * LED_OFFSET),
-        b)
+        0)  #b)
 ### end set_rgb_color() ####
 
 if __name__ == '__main__':

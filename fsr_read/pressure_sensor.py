@@ -12,6 +12,7 @@ Requires GPIO 0.3.1a or later
 
 import time
 import RPi.GPIO as GPIO
+import sys
 
 NO_PRESSURE = 10000             # count value for zero pressure
 TEST_PIN = 0            # pin to read from to check if I can indeed read
@@ -25,7 +26,11 @@ class PRESSURE_SENSOR:
         self._debug = debug
         GPIO.setmode(GPIO.BCM)
         # try reading from hw to generate exception on object creation
-        GPIO.output(TEST_PIN, GPIO.LOW)
+        #GPIO.setup(pin, GPIO.OUT)
+        #GPIO.output(pin, GPIO.LOW)
+        #time.sleep(0.1)
+
+       #GPIO.output(TEST_PIN, GPIO.LOW)
         # don't catch exception here, let it go to the caller
 
     def test_sensor_ok(self):
@@ -47,7 +52,7 @@ class PRESSURE_SENSOR:
             # empty the capacitor
             GPIO.setup(pin, GPIO.OUT)
             GPIO.output(pin, GPIO.LOW)
-            time.sleep(0.1)
+            time.sleep(0.01)
 
             # prepare to read
             GPIO.setup(pin, GPIO.IN)
@@ -64,21 +69,20 @@ class PRESSURE_SENSOR:
                     if self.reading >= NO_PRESSURE:
                         break
 
-            # The sensor is not accurate. As I apply pressure, it goes from high count (8000+)
-            # to low (~600), then it goes up again (~2000) at max pressure.
-            # For now just assume max pressure is when count in minimum.
-            # This will look like pressure is reduced at the end, when it is in fact at its maximum
-            #
-            # TODO: algorithm to keep track where we are in this U-shaped curve
             if self._debug:
-                print('Pressure is: ' + str(self.reading))
+                # go to beginning of line, print the prompt
+                sys.stdout.write("\rPressure is: {:<11}".format(
+                    str(self.reading) if self.reading < NO_PRESSURE else "no pressure"))
+                # stay on this line
+                sys.stdout.flush()
+
             return self.reading
 
         except Exception:
             if self._debug:
                 print("Cannot read hardware I/O (not running as root?)")
             return NO_PRESSURE
-    
+
     def cleanup(self):
         """Run GPIO library cleanup procedure
         """
