@@ -158,7 +158,7 @@ def main():
             pressure_sensor = PRESSURE_SENSOR()     # arguments.debug)
         except Exception as e:
             print("Cannot find the pressure sensor.")
-            print(e)
+            #print(e)
             # disable pressure sensor
             arguments.sensor = False
 
