@@ -498,12 +498,12 @@ def main():
     if arguments.color:
         print("Color LED hardware enabled.")
     else:
-        print("* Color LED hardware DISABLED *")
+        print("*** DISABLED *** Color LED hardware")
     if arguments.sensor:
         print("Pressure sensor hardware enabled.")
         print("Press the pressure sensor to regulate LED dimming only.")
     else:
-        print("* Pressure sensor hardware DISABLED *")
+        print("*** DISABLED *** Pressure sensor hardware")
     if not arguments.legacy:
         print("Control both color and dimming via the network using the "
               "IoT Load block.")
