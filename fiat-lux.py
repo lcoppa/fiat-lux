@@ -521,7 +521,10 @@ def main():
     # Main loop
     ###########
     try:
+        # to exit mail loop
         done = False
+        # dimming direction when using pressure sensor
+        dimming_down = False
 
         while not done:
             app.service()
@@ -575,13 +578,13 @@ def main():
                         arguments.color):
                         #and led_iot_block[DIMMABLE_LED_INDEX].nviLoadControl.data.state):
 
-                    # Start by dimming down (if possible)
-                    dimming_down = False
+                    # for shorter name
+                    nvoLoadStatus = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus
 
                     # Read latest color RGB LED (which implies brightness)
-                    old_red = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.red
-                    old_green = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.green
-                    old_blue = led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.blue
+                    old_red = nvoLoadStatus.data.color.color_value.RGB.red
+                    old_green = nvoLoadStatus.data.color.color_value.RGB.green
+                    old_blue = nvoLoadStatus.data.color.color_value.RGB.blue
 
                     # get brightness of latest RGB values from HLS space
                     hls_colors = colorsys.rgb_to_hls(old_red, old_green, old_blue)
@@ -613,20 +616,20 @@ def main():
                             # start changing brightness up or down
                             if dimming_down:
                                 # dim down
-                                new_brightness = max(MIN_BRIGHTNESS_LEVEL, 
+                                new_brightness = max(MIN_BRIGHTNESS_LEVEL,
                                     new_brightness - DIMMING_STEP)
                                 # until brightness is minimum
                                 if new_brightness == MIN_BRIGHTNESS_LEVEL:
                                     dimming_down = False
                             else:
                                 # dim up
-                                new_brightness = min(MAX_BRIGHTNESS_LEVEL, 
+                                new_brightness = min(MAX_BRIGHTNESS_LEVEL,
                                     new_brightness + DIMMING_STEP)
                                 # until brightness is max
                                 if new_brightness == MAX_BRIGHTNESS_LEVEL:
                                     dimming_down = True
 
-                            # reconvert HLS with new brightness to RGB color space
+                            # reconvert HLS with new brightness to RGB
                             (new_red, new_green, new_blue) = \
                                 colorsys.hls_to_rgb(hls_colors[HUE],
                                                     new_brightness,
@@ -637,14 +640,17 @@ def main():
                                 this_led, DIMMABLE_LED_INDEX)
 
                     # Update output LED functional block
-                    led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.level = \
+                    nvoLoadStatus.data.level = \
                         new_brightness
-                    led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.red = \
+                    nvoLoadStatus.data.color.color_value.RGB.red = \
                         new_red
-                    led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.green = \
+                    nvoLoadStatus.data.color.color_value.RGB.green = \
                         new_green
-                    led_iot_block[DIMMABLE_LED_INDEX].nvoLoadStatus.data.color.color_value.RGB.blue = \
+                    nvoLoadStatus.data.color.color_value.RGB.blue = \
                         new_blue
+
+                    # next time we dim the other direction
+                    dimming_down = not dimming_down
 
             #pdb.set_trace()
     finally:
