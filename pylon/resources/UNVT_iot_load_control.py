@@ -25,7 +25,7 @@ resource file set iot 90:00:00:05:00:00:00:00-1.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:24.
 
 from pylon.resources import base
 from pylon.resources.userdefined import userdefined
@@ -58,7 +58,7 @@ class UNVT_iot_load_control(base.Structure):
                         size=1,
                         signed=False,
                         minimum=0,
-                        maximum=127
+                        maximum=255
                     ) for i in range(8)
                 ]
             )
@@ -103,22 +103,23 @@ class UNVT_iot_load_control(base.Structure):
         self.__state = base.Scaled(
             size=1,
             signed=False,
+            invalid=255,
             minimum=0,
-            maximum=127
+            maximum=254
         )
         self._register(('state', self.__state))
 
         self.__level = base.Float(
             single=True,
             minimum=0,
-            maximum=127
+            maximum=3.40282E+038
         )
         self._register(('level', self.__level))
 
         self.__angle = base.Float(
             single=True,
             minimum=0,
-            maximum=127
+            maximum=360
         )
         self._register(('angle', self.__angle))
 
@@ -129,14 +130,14 @@ class UNVT_iot_load_control(base.Structure):
         self.__level_multiplier = base.Float(
             single=True,
             minimum=0,
-            maximum=255
+            maximum=3.40282E+038
         )
         self._register(('level_multiplier', self.__level_multiplier))
 
         self.__target_reduction = base.Float(
             single=True,
             minimum=0,
-            maximum=255
+            maximum=3.40282E+038
         )
         self._register(('target_reduction', self.__target_reduction))
 
@@ -151,29 +152,30 @@ class UNVT_iot_load_control(base.Structure):
         self.__delay = base.Float(
             single=True,
             minimum=0,
-            maximum=255
+            maximum=3.40282E+038
         )
         self._register(('delay', self.__delay))
 
         self.__fade = base.Float(
             single=True,
             minimum=0,
-            maximum=255
+            maximum=3.40282E+038
         )
         self._register(('fade', self.__fade))
 
         self.__duration = base.Float(
             single=True,
             minimum=0,
-            maximum=255
+            maximum=3.40282E+038
         )
         self._register(('duration', self.__duration))
 
         self.__button = base.Scaled(
             size=1,
             signed=False,
+            invalid=255,
             minimum=0,
-            maximum=255
+            maximum=254
         )
         self._register(('button', self.__button))
 
@@ -182,10 +184,11 @@ class UNVT_iot_load_control(base.Structure):
         self._register(('priority', self.__priority))
 
         self.__scene_number = base.Scaled(
-            size=1,
+            size=2,
             signed=False,
+            invalid=65535,
             minimum=0,
-            maximum=127
+            maximum=65534
         )
         self._register(('scene_number', self.__scene_number))
 
@@ -254,7 +257,8 @@ class UNVT_iot_load_control(base.Structure):
         __set_angle,
         None,
         """Load angle (degrees) Angle for loads supporting angle setting such
-        as sunblinds;  set to invalid value if angle is not specified."""
+        as sunblinds;  set to invalid value if angle is not specified.
+        (degrees)."""
     )
 
     def __set_color(self, v):
@@ -287,7 +291,8 @@ class UNVT_iot_load_control(base.Structure):
         __set_target_reduction,
         None,
         """Target reduction.  Energy savings target specified as a percent
-        reduction in energy use;  set to invalid value if not specified."""
+        reduction in energy use;  set to invalid value if not specified.
+        (percent)."""
     )
 
     def __set_area_occupancy(self, v):
@@ -469,7 +474,7 @@ class UNVT_iot_load_control(base.Structure):
 
     def __len__(self):
         """Return the length of the type, in bytes."""
-        return 59
+        return 60
 
 
 if __name__ == '__main__':

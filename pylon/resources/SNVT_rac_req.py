@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -65,8 +65,7 @@ class SNVT_rac_req(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=4,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..15')
@@ -90,8 +89,7 @@ class SNVT_rac_req(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=4,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..15')
@@ -115,8 +113,7 @@ class SNVT_rac_req(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=5,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..31')
@@ -140,8 +137,7 @@ class SNVT_rac_req(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=3,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..7')
@@ -179,11 +175,9 @@ class SNVT_rac_req(base.Structure):
                         type(v)
                     )
                 )
-            self.__set_unit_id(v.__unit_id)
-            self.__set_location(v.__location)
-            self.__set_car_id(v.__car_id)
-            self.__set_reserved(v.__reserved)
             self.__set_audio_sensor_type(v.__audio_sensor_type)
+            self.___bf01._value = v.___bf01._value
+            self.___bf00._value = v.___bf00._value
 
         _value = property(lambda self: self, __set)
 
@@ -221,8 +215,7 @@ class SNVT_rac_req(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=4,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..15')
@@ -246,8 +239,7 @@ class SNVT_rac_req(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=4,
-                        offset=4,
-                        signed=False
+                        offset=4
                     )
                 else:
                     raise ValueError('Not in range 0..15')
@@ -271,8 +263,7 @@ class SNVT_rac_req(base.Structure):
                     self.___bf01._setbits(
                         value=v,
                         size=5,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..31')
@@ -296,8 +287,7 @@ class SNVT_rac_req(base.Structure):
                     self.___bf01._setbits(
                         value=v,
                         size=3,
-                        offset=5,
-                        signed=False
+                        offset=5
                     )
                 else:
                     raise ValueError('Not in range 0..7')
@@ -335,11 +325,9 @@ class SNVT_rac_req(base.Structure):
                             type(v)
                         )
                     )
-                self.__set_unit_id(v.__unit_id)
-                self.__set_location(v.__location)
-                self.__set_car_id(v.__car_id)
-                self.__set_reserved(v.__reserved)
                 self.__set_audio_sensor_type(v.__audio_sensor_type)
+                self.___bf01._value = v.___bf01._value
+                self.___bf00._value = v.___bf00._value
 
             _value = property(lambda self: self, __set)
 
@@ -535,8 +523,7 @@ class SNVT_rac_req(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -560,8 +547,7 @@ class SNVT_rac_req(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -585,8 +571,7 @@ class SNVT_rac_req(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=6,
-                offset=2,
-                signed=False
+                offset=2
             )
         else:
             raise ValueError('Not in range 0..63')
@@ -644,12 +629,10 @@ class SNVT_rac_req(base.Structure):
                     type(v)
                 )
             )
-        self.__set_dest_def(v.__dest_def)
-        self.__set_dest_p2p(v.__dest_p2p)
-        self.__set_reserved(v.__reserved)
         self.__set_audio_type(v.__audio_type)
         self.__set_addr_init(v.__addr_init)
         self.__set_addr_dest(v.__addr_dest)
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

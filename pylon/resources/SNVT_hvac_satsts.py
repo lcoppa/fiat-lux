@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -63,8 +63,7 @@ class SNVT_hvac_satsts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -90,8 +89,7 @@ class SNVT_hvac_satsts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -117,8 +115,7 @@ class SNVT_hvac_satsts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=2,
-                signed=False
+                offset=2
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -144,8 +141,7 @@ class SNVT_hvac_satsts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=3,
-                signed=False
+                offset=3
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -171,8 +167,7 @@ class SNVT_hvac_satsts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -198,8 +193,7 @@ class SNVT_hvac_satsts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=5,
-                signed=False
+                offset=5
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -225,8 +219,7 @@ class SNVT_hvac_satsts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=2,
-                offset=6,
-                signed=False
+                offset=6
             )
         else:
             raise ValueError('Not in range 0..3')
@@ -250,8 +243,7 @@ class SNVT_hvac_satsts(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -275,8 +267,7 @@ class SNVT_hvac_satsts(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -306,15 +297,8 @@ class SNVT_hvac_satsts(base.Structure):
                     type(v)
                 )
             )
-        self.__set_pri_heat(v.__pri_heat)
-        self.__set_sec_heat(v.__sec_heat)
-        self.__set_pri_cool(v.__pri_cool)
-        self.__set_sec_cool(v.__sec_cool)
-        self.__set_pri_duct_starved(v.__pri_duct_starved)
-        self.__set_sec_duct_starved(v.__sec_duct_starved)
-        self.__set_reserved(v.__reserved)
-        self.__set_reserved1(v.__reserved1)
-        self.__set_manufacturer_defined(v.__manufacturer_defined)
+        self.___bf01._value = v.___bf01._value
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

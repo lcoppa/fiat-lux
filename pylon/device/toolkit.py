@@ -386,11 +386,11 @@ def simple_checksum(me):
         for item in me:
             if isinstance(item, str):
                 if len(item) == 1:
-                    cs += ord(item) << (i % 29)
+                    cs += ord(item) << i % 29
                 else:
-                    cs += ord(item[0]) << (i % 29) + simple_checksum(item[1:])
+                    cs += (ord(item[0]) << i % 29) + simple_checksum(item[1:])
             else:
-                cs += item << (i % 29)
+                cs += item << i % 29
             i += 1
 
     return cs & 0x7FFFFFFF

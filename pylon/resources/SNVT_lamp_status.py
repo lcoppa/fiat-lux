@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -77,8 +77,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -102,8 +101,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -127,8 +125,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -152,8 +149,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -177,8 +173,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -202,8 +197,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -227,8 +221,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -252,8 +245,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -277,8 +269,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -302,8 +293,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -327,8 +317,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -352,8 +341,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -377,8 +365,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -402,8 +389,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -427,8 +413,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -452,8 +437,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -477,8 +461,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -502,8 +485,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -527,8 +509,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -552,8 +533,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -577,8 +557,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -602,8 +581,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -627,8 +605,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -652,8 +629,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -677,8 +653,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -702,8 +677,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -727,8 +701,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -752,8 +725,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -777,8 +749,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -802,8 +773,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -827,8 +797,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -852,8 +821,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -877,8 +845,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -902,8 +869,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -927,8 +893,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -952,8 +917,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -977,8 +941,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1002,8 +965,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1027,8 +989,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1052,8 +1013,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1081,46 +1041,11 @@ class SNVT_lamp_status(base.Structure):
                         type(v)
                     )
                 )
-            self.__set_lamp_current_high(v.__lamp_current_high)
-            self.__set_lamp_current_low(v.__lamp_current_low)
-            self.__set_main_current_high(v.__main_current_high)
-            self.__set_main_current_low(v.__main_current_low)
-            self.__set_lamp_voltage_high(v.__lamp_voltage_high)
-            self.__set_lamp_voltage_low(v.__lamp_voltage_low)
-            self.__set_main_voltage_high(v.__main_voltage_high)
-            self.__set_main_voltage_low(v.__main_voltage_low)
-            self.__set_powerfactor_low(v.__powerfactor_low)
-            self.__set_OLC_temp_high(v.__OLC_temp_high)
-            self.__set_power_high(v.__power_high)
-            self.__set_power_low(v.__power_low)
-            self.__set_relay_failure(v.__relay_failure)
-            self.__set_cap_failure(v.__cap_failure)
-            self.__set_lamp_failure(v.__lamp_failure)
-            self.__set_ballast_failure(v.__ballast_failure)
-            self.__set_inter_com_failure(v.__inter_com_failure)
-            self.__set_exter_com_failure(v.__exter_com_failure)
-            self.__set_main_volt_below_spec(v.__main_volt_below_spec)
-            self.__set_lamp_restart_count(v.__lamp_restart_count)
-            self.__set_fading_ready(v.__fading_ready)
-            self.__set_ballast_temp_high(v.__ballast_temp_high)
-            self.__set_digi_in_A(v.__digi_in_A)
-            self.__set_digi_in_B(v.__digi_in_B)
-            self.__set_bit_25_res(v.__bit_25_res)
-            self.__set_bit_26_res(v.__bit_26_res)
-            self.__set_bit_27_res(v.__bit_27_res)
-            self.__set_bit_28_res(v.__bit_28_res)
-            self.__set_bit_29_res(v.__bit_29_res)
-            self.__set_bit_30_res(v.__bit_30_res)
-            self.__set_bit_31_res(v.__bit_31_res)
-            self.__set_bit_32_res(v.__bit_32_res)
-            self.__set_bit_33_res(v.__bit_33_res)
-            self.__set_bit_34_res(v.__bit_34_res)
-            self.__set_bit_35_res(v.__bit_35_res)
-            self.__set_bit_36_res(v.__bit_36_res)
-            self.__set_bit_37_res(v.__bit_37_res)
-            self.__set_bit_38_res(v.__bit_38_res)
-            self.__set_bit_39_res(v.__bit_39_res)
-            self.__set_bit_40_res(v.__bit_40_res)
+            self.___bf04._value = v.___bf04._value
+            self.___bf03._value = v.___bf03._value
+            self.___bf02._value = v.___bf02._value
+            self.___bf01._value = v.___bf01._value
+            self.___bf00._value = v.___bf00._value
 
         _value = property(lambda self: self, __set)
 
@@ -1170,8 +1095,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1195,8 +1119,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1220,8 +1143,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1245,8 +1167,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1270,8 +1191,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1295,8 +1215,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1320,8 +1239,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1345,8 +1263,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1370,8 +1287,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1395,8 +1311,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1420,8 +1335,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1445,8 +1359,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1470,8 +1383,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1495,8 +1407,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1520,8 +1431,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1545,8 +1455,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1570,8 +1479,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1595,8 +1503,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1620,8 +1527,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1645,8 +1551,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1670,8 +1575,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1695,8 +1599,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1720,8 +1623,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1745,8 +1647,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1770,8 +1671,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1795,8 +1695,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1820,8 +1719,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1845,8 +1743,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1870,8 +1767,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1895,8 +1791,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1920,8 +1815,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1945,8 +1839,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1970,8 +1863,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -1995,8 +1887,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -2020,8 +1911,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -2045,8 +1935,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -2070,8 +1959,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -2095,8 +1983,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -2120,8 +2007,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -2145,8 +2031,7 @@ class SNVT_lamp_status(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -2174,46 +2059,11 @@ class SNVT_lamp_status(base.Structure):
                         type(v)
                     )
                 )
-            self.__set_lamp_current_high(v.__lamp_current_high)
-            self.__set_lamp_current_low(v.__lamp_current_low)
-            self.__set_main_current_high(v.__main_current_high)
-            self.__set_main_current_low(v.__main_current_low)
-            self.__set_lamp_voltage_high(v.__lamp_voltage_high)
-            self.__set_lamp_voltage_low(v.__lamp_voltage_low)
-            self.__set_main_voltage_high(v.__main_voltage_high)
-            self.__set_main_voltage_low(v.__main_voltage_low)
-            self.__set_powerfactor_low(v.__powerfactor_low)
-            self.__set_OLC_temp_high(v.__OLC_temp_high)
-            self.__set_power_high(v.__power_high)
-            self.__set_power_low(v.__power_low)
-            self.__set_relay_failure(v.__relay_failure)
-            self.__set_cap_failure(v.__cap_failure)
-            self.__set_lamp_failure(v.__lamp_failure)
-            self.__set_ballast_failure(v.__ballast_failure)
-            self.__set_inter_com_failure(v.__inter_com_failure)
-            self.__set_exter_com_failure(v.__exter_com_failure)
-            self.__set_main_volt_below_spec(v.__main_volt_below_spec)
-            self.__set_lamp_restart_count(v.__lamp_restart_count)
-            self.__set_fading_ready(v.__fading_ready)
-            self.__set_ballast_temp_high(v.__ballast_temp_high)
-            self.__set_digi_in_A(v.__digi_in_A)
-            self.__set_digi_in_B(v.__digi_in_B)
-            self.__set_bit_25_res(v.__bit_25_res)
-            self.__set_bit_26_res(v.__bit_26_res)
-            self.__set_bit_27_res(v.__bit_27_res)
-            self.__set_bit_28_res(v.__bit_28_res)
-            self.__set_bit_29_res(v.__bit_29_res)
-            self.__set_bit_30_res(v.__bit_30_res)
-            self.__set_bit_31_res(v.__bit_31_res)
-            self.__set_bit_32_res(v.__bit_32_res)
-            self.__set_bit_33_res(v.__bit_33_res)
-            self.__set_bit_34_res(v.__bit_34_res)
-            self.__set_bit_35_res(v.__bit_35_res)
-            self.__set_bit_36_res(v.__bit_36_res)
-            self.__set_bit_37_res(v.__bit_37_res)
-            self.__set_bit_38_res(v.__bit_38_res)
-            self.__set_bit_39_res(v.__bit_39_res)
-            self.__set_bit_40_res(v.__bit_40_res)
+            self.___bf04._value = v.___bf04._value
+            self.___bf03._value = v.___bf03._value
+            self.___bf02._value = v.___bf02._value
+            self.___bf01._value = v.___bf01._value
+            self.___bf00._value = v.___bf00._value
 
         _value = property(lambda self: self, __set)
 

@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -151,8 +151,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -176,8 +175,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=2,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..3')
@@ -202,8 +200,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=2,
-                offset=3,
-                signed=False
+                offset=3
             )
         else:
             raise ValueError('Not in range 0..3')
@@ -228,8 +225,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=3,
-                offset=5,
-                signed=False
+                offset=5
             )
         else:
             raise ValueError('Not in range 0..7')
@@ -264,8 +260,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -290,8 +285,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=7,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..127')
@@ -357,8 +351,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf02._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -382,8 +375,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf02._setbits(
                 value=v,
                 size=2,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..3')
@@ -408,8 +400,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf02._setbits(
                 value=v,
                 size=2,
-                offset=3,
-                signed=False
+                offset=3
             )
         else:
             raise ValueError('Not in range 0..3')
@@ -434,8 +425,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf02._setbits(
                 value=v,
                 size=3,
-                offset=5,
-                signed=False
+                offset=5
             )
         else:
             raise ValueError('Not in range 0..7')
@@ -470,8 +460,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf03._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -496,8 +485,7 @@ class SNVT_safe_1(base.Structure):
             self.___bf03._setbits(
                 value=v,
                 size=7,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..127')
@@ -568,28 +556,20 @@ class SNVT_safe_1(base.Structure):
                     type(v)
                 )
             )
-        self.__set_id_a_header(v.__id_a_header)
-        self.__set_id_a_format(v.__id_a_format)
-        self.__set_id_a_version(v.__id_a_version)
-        self.__set_id_a_length(v.__id_a_length)
         self.__set_address_a_1(v.__address_a_1)
-        self.__set_address_a_timedate(v.__address_a_timedate)
-        self.__set_address_a_2(v.__address_a_2)
         self.__set_address_a_3(v.__address_a_3)
         self.__set_time_stamp_msword(v.__time_stamp_msword)
         self.__set_data_a(v.__data_a)
         self.__set_crc_a(v.__crc_a)
-        self.__set_id_b_header(v.__id_b_header)
-        self.__set_id_b_format(v.__id_b_format)
-        self.__set_id_b_version(v.__id_b_version)
-        self.__set_id_b_length(v.__id_b_length)
         self.__set_address_b_1(v.__address_b_1)
-        self.__set_address_b_timedate(v.__address_b_timedate)
-        self.__set_address_b_2(v.__address_b_2)
         self.__set_address_b_3(v.__address_b_3)
         self.__set_time_stamp_lsword(v.__time_stamp_lsword)
         self.__set_data_b(v.__data_b)
         self.__set_crc_b(v.__crc_b)
+        self.___bf03._value = v.___bf03._value
+        self.___bf02._value = v.___bf02._value
+        self.___bf01._value = v.___bf01._value
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

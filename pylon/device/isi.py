@@ -33,7 +33,11 @@ object, which implements the ISI class defined in this module.
 
 import collections
 import ctypes
+from functools import wraps
 import logging
+import queue
+import threading
+import _thread      # used in runtime < Python 3.3
 
 
 import pylon
@@ -579,7 +583,7 @@ class Enrollment(toolkit.PilonObject):
         __set_application,
         None, """Application identifier.
 
-        The first 6 bytes of the host’s standard program ID — the last two
+        The first 6 bytes of the host's standard program ID - the last two
         standard program ID bytes (channel type and model number) are not
         included here. All bytes are zero for 'don't care.'
 
@@ -1235,6 +1239,39 @@ _on_get_assembly_proxy = _on_get_assembly_proto(
 )
 
 
+def threaded(function):
+    """A decorator to produce thread-safe API.
+
+    The API provided by the ISI class is generally only available to the same
+    thread which created the ISI object (which typically is the same thread
+    which also created the Application object).
+
+    However, some ISI API can be called from any thread. If the calling thread
+    is the object's owner, the call is executed immediately. Otherwise, the
+    call is funnelled through a thread-safe queue, and processed with the next
+    ISI.service() invocation.
+
+    Note, however, an important difference between direct and delayed
+    execution: When the API is executed immediately (direct execution), your
+    calling code can and should handle any exceptions that might have occurred
+    during the execution of that API. However, delayed execution occurs at a
+    (slightly) later time and in a different thread. Your calling code cannot
+    respond to exceptions raised in those cases (but the exception details are
+    available from the logfile).
+
+    This decorator function provides the thread safety for decorated API. """
+    @wraps(function)
+    def wrapper(self, *args, **kwargs):
+        if self._threadid != self._get_ident():
+            # Thread violation: enqueue for later
+            self._function_queue.put((function, args, kwargs))
+        else:
+            # OK. Go for it:
+            function(self, *args, **kwargs)
+        return None
+    return wrapper
+
+
 class ISI(toolkit.PilonObject):
     """
     This class wraps the ISI/pi C language API into pilon for Python.
@@ -1250,6 +1287,15 @@ class ISI(toolkit.PilonObject):
         Application object creates an ISI object as and when necessary,
         which can be obtained from Application.isi.
         """
+
+        if toolkit.language_version(3, 3):
+            self._get_ident = threading.get_ident
+        else:
+            self._get_ident = _thread.get_ident
+
+        self._threadid = self._get_ident()
+        self._function_queue = queue.Queue()
+
         self.__stack = stack
         self.__app = application
         self.__library = library
@@ -1366,7 +1412,7 @@ class ISI(toolkit.PilonObject):
             (IsiType.S, IsiType.DA, IsiType.DAS)
         )
 
-    # isi_type is named isi_* to avoid shaddowing the reserved word 'type'
+    # isi_type is named isi_* to avoid shadowing the reserved word 'type'
     isi_type = property(
         lambda self: self.__type,
         __set_type,
@@ -1746,12 +1792,27 @@ class ISI(toolkit.PilonObject):
     def service(self):
         """Service the ISI engine.
 
-        This is normally done by the Application class' service() method.
+        This is normally called by the Application class' service() method.
+        The service call processes any funnelled calls of threaded API methods,
+        and calls the ISI engine's service routine (IsiTick).
         """
+        while not self._function_queue.empty():
+            (function, args, kwargs) = self._function_queue.get()
+            try:
+                function(self, *args, **kwargs)
+            except Exception as e:
+                logger.error(
+                    'The delayed call to {0} failed: {1}'.format(
+                        function,
+                        e
+                    )
+                )
+
         if self.__ticker.is_expired:
             self.__call('IsiTick', self.__tick())
             self.__ticker.start(1 / TICKS_PER_SECOND)
 
+    @threaded
     def return_to_factory_defaults(self):
         """Restore the device's self-installation data to factory defaults.
 
@@ -1765,6 +1826,10 @@ class ISI(toolkit.PilonObject):
         Any changes related to returning to factory defaults, such as resetting
         of device-specific configuration properties to their initial values,
         must occur prior to calling this function.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('return_to_factory_defaults() starting')
 
@@ -1775,6 +1840,7 @@ class ISI(toolkit.PilonObject):
 
         logger.info('return_to_factory_defaults() done')
 
+    @threaded
     def fetch_domain(self):
         """Start or restart the fetch domain process in a domain address
         server (DAS).
@@ -1783,6 +1849,10 @@ class ISI(toolkit.PilonObject):
         address server. The ISI engine must be running for this function to
         have any effect, and this function only operates on a domain address
         server.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('fetch_domain() starting')
 
@@ -1793,6 +1863,7 @@ class ISI(toolkit.PilonObject):
 
         logger.info('fetch_domain() done')
 
+    @threaded
     def fetch_device(self):
         """Start or restart the fetch device process in a domain address
         server (DAS).
@@ -1803,6 +1874,10 @@ class ISI(toolkit.PilonObject):
         The remote device remains unaware of the change to its primary domain.
         The ISI engine must be running for this function to have any effect,
         and this function only operates on a domain address server.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('fetch_device() starting')
 
@@ -1813,6 +1888,7 @@ class ISI(toolkit.PilonObject):
 
         logger.info('fetch_device() done')
 
+    @threaded
     def open_enrollment(self, assembly):
         """Open manual enrollment for the specified assembly.
 
@@ -1821,6 +1897,10 @@ class ISI(toolkit.PilonObject):
         connection, and sends a CSMO manual connection invitation to all
         devices in the network.
         The ISI engine must be running and in the idle state.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('open_enrollment({0}) starting'.format(assembly))
 
@@ -1842,6 +1922,7 @@ class ISI(toolkit.PilonObject):
 
         logger.info('open_enrollment({0}) done'.format(assembly))
 
+    @threaded
     def create_enrollment(self, assembly):
         """Accept a connection invitation for a new connection.
 
@@ -1859,6 +1940,10 @@ class ISI(toolkit.PilonObject):
         The ISI engine must be running and in the correct state for this
         function to have any effect. For a connection host, the ISI engine must
         be in the approved state. Other devices must be in the pending state.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('create_enrollment({0}) starting'.format(assembly))
 
@@ -1873,6 +1958,7 @@ class ISI(toolkit.PilonObject):
 
         logger.info('create_enrollment({0}) done'.format(assembly))
 
+    @threaded
     def extend_enrollment(self, assembly):
         """Accept a connection invitation for extending an existing connection.
 
@@ -1889,6 +1975,10 @@ class ISI(toolkit.PilonObject):
         The ISI engine must be running and in the correct state for this
         function to have any effect. For a connection host, the ISI engine must
         be in the approved state. Other devices must be in the pending state.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('extend_enrollment({0}) starting'.format(assembly))
 
@@ -1903,6 +1993,7 @@ class ISI(toolkit.PilonObject):
 
         logger.info('extend_enrollment({0}) done'.format(assembly))
 
+    @threaded
     def cancel_enrollment(self):
         """Cancel an open (pending or approved) enrollment.
 
@@ -1913,6 +2004,10 @@ class ISI(toolkit.PilonObject):
         enrollment locally.
         The function has no effect unless the ISI engine is running and in the
         pending or approved state.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('cancel_enrollment() starting')
 
@@ -1923,6 +2018,7 @@ class ISI(toolkit.PilonObject):
 
         logger.info('cancel_enrollment() done')
 
+    @threaded
     def leave_enrollment(self, assembly):
         """Remove the specified assembly from all enrolled connections as a
         local operation only.
@@ -1932,6 +2028,10 @@ class ISI(toolkit.PilonObject):
         When used on the connection host, the function is automatically
         interpreted as a call to delete_enrollment.
         This function has no effect if the ISI engine is stopped.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('leave_enrollment({0}) starting'.format(assembly))
 
@@ -1946,6 +2046,7 @@ class ISI(toolkit.PilonObject):
 
         logger.info('leave_enrollment({0}) done'.format(assembly))
 
+    @threaded
     def delete_enrollment(self, assembly):
         """Remove the specified assembly from all enrolled connections.
 
@@ -1955,6 +2056,10 @@ class ISI(toolkit.PilonObject):
         connections, and sends a CSMD connection deletion message to all other
         devices in the connection to remove them from the connection as well.
         This function has no effect if the ISI engine is stopped.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('delete_enrollment({0}) starting'.format(assembly))
 
@@ -2002,6 +2107,7 @@ class ISI(toolkit.PilonObject):
         api.restype = ctypes.c_int
         return api()
 
+    @threaded
     def send_drum(self):
         """Issue an out-of-schedule ISI DRUM message.
 
@@ -2010,12 +2116,17 @@ class ISI(toolkit.PilonObject):
         transmission of a DRUM message.
         Some applications send the DRUM message when a service message is sent.
         This promotes fast device discovery in some networks.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         api = self.__engine.IsiSendDrum
         api.argtypes = []
         api.restype = None
         api()
 
+    @threaded
     def initiate_auto_enrollment(self, assembly):
         """Start automatic enrollment for the given assembly.
 
@@ -2030,6 +2141,10 @@ class ISI(toolkit.PilonObject):
         This function cannot be called before the IsiEvent.WARM event has been
         signaled through the OnUserInterface event.
         This function does nothing when the ISI engine is stopped.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
         """
         logger.debug('initiate_auto_enrollment({0}) starting'.format(assembly))
 

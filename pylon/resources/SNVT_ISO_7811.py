@@ -27,7 +27,7 @@ existing designs is permitted."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -164,8 +164,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -189,8 +188,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -214,8 +212,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -239,8 +236,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -264,8 +260,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf02._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -289,8 +284,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf02._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -314,8 +308,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf03._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -339,8 +332,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf03._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -364,8 +356,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf04._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -389,8 +380,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf04._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -414,8 +404,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf05._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -439,8 +428,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf05._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -464,8 +452,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf06._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -489,8 +476,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf06._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -514,8 +500,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf07._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -539,8 +524,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf07._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -564,8 +548,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf08._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -589,8 +572,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf08._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -614,8 +596,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf09._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -639,8 +620,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf09._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -664,8 +644,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf10._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -689,8 +668,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf10._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -714,8 +692,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf11._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -739,8 +716,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf11._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -764,8 +740,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf12._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -789,8 +764,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf12._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -814,8 +788,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf13._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -839,8 +812,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf13._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -864,8 +836,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf14._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -889,8 +860,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf14._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -914,8 +884,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf15._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -939,8 +908,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf15._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -964,8 +932,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf16._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -989,8 +956,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf16._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -1014,8 +980,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf17._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -1039,8 +1004,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf17._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -1064,8 +1028,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf18._setbits(
                 value=v,
                 size=4,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -1089,8 +1052,7 @@ class SNVT_ISO_7811(base.Structure):
             self.___bf18._setbits(
                 value=v,
                 size=4,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -1118,44 +1080,25 @@ class SNVT_ISO_7811(base.Structure):
                     type(v)
                 )
             )
-        self.__set_digit1(v.__digit1)
-        self.__set_digit2(v.__digit2)
-        self.__set_digit3(v.__digit3)
-        self.__set_digit4(v.__digit4)
-        self.__set_digit5(v.__digit5)
-        self.__set_digit6(v.__digit6)
-        self.__set_digit7(v.__digit7)
-        self.__set_digit8(v.__digit8)
-        self.__set_digit9(v.__digit9)
-        self.__set_digit10(v.__digit10)
-        self.__set_digit11(v.__digit11)
-        self.__set_digit12(v.__digit12)
-        self.__set_digit13(v.__digit13)
-        self.__set_digit14(v.__digit14)
-        self.__set_digit15(v.__digit15)
-        self.__set_digit16(v.__digit16)
-        self.__set_digit17(v.__digit17)
-        self.__set_digit18(v.__digit18)
-        self.__set_digit19(v.__digit19)
-        self.__set_digit20(v.__digit20)
-        self.__set_digit21(v.__digit21)
-        self.__set_digit22(v.__digit22)
-        self.__set_digit23(v.__digit23)
-        self.__set_digit24(v.__digit24)
-        self.__set_digit25(v.__digit25)
-        self.__set_digit26(v.__digit26)
-        self.__set_digit27(v.__digit27)
-        self.__set_digit28(v.__digit28)
-        self.__set_digit29(v.__digit29)
-        self.__set_digit30(v.__digit30)
-        self.__set_digit31(v.__digit31)
-        self.__set_digit32(v.__digit32)
-        self.__set_digit33(v.__digit33)
-        self.__set_digit34(v.__digit34)
-        self.__set_digit35(v.__digit35)
-        self.__set_digit36(v.__digit36)
-        self.__set_digit37(v.__digit37)
-        self.__set_digit38(v.__digit38)
+        self.___bf18._value = v.___bf18._value
+        self.___bf17._value = v.___bf17._value
+        self.___bf16._value = v.___bf16._value
+        self.___bf15._value = v.___bf15._value
+        self.___bf14._value = v.___bf14._value
+        self.___bf13._value = v.___bf13._value
+        self.___bf12._value = v.___bf12._value
+        self.___bf11._value = v.___bf11._value
+        self.___bf10._value = v.___bf10._value
+        self.___bf09._value = v.___bf09._value
+        self.___bf08._value = v.___bf08._value
+        self.___bf07._value = v.___bf07._value
+        self.___bf06._value = v.___bf06._value
+        self.___bf05._value = v.___bf05._value
+        self.___bf04._value = v.___bf04._value
+        self.___bf03._value = v.___bf03._value
+        self.___bf02._value = v.___bf02._value
+        self.___bf01._value = v.___bf01._value
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

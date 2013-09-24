@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -54,8 +54,7 @@ class SCPTnvPriority(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -79,8 +78,7 @@ class SCPTnvPriority(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=7,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..127')
@@ -108,8 +106,7 @@ class SCPTnvPriority(base.Structure):
                     type(v)
                 )
             )
-        self.__set_user_flag(v.__user_flag)
-        self.__set_nv(v.__nv)
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

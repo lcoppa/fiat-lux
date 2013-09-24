@@ -25,7 +25,7 @@ file set iot 90:00:00:05:00:00:00:00-1.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:24.
 
 from pylon.resources import base
 from pylon.resources.userdefined import userdefined
@@ -56,16 +56,18 @@ class UNVT_iot_alarm(base.Structure):
             self.__profile_index = base.Scaled(
                 size=2,
                 signed=False,
+                invalid=65535,
                 minimum=0,
-                maximum=127
+                maximum=65534
             )
             self._register(('profile_index', self.__profile_index))
 
             self.__block_index = base.Scaled(
                 size=2,
                 signed=False,
+                invalid=65535,
                 minimum=0,
-                maximum=127
+                maximum=65534
             )
             self._register(('block_index', self.__block_index))
 
@@ -139,7 +141,7 @@ class UNVT_iot_alarm(base.Structure):
                         size=1,
                         signed=False,
                         minimum=0,
-                        maximum=127
+                        maximum=255
                     ) for i in range(120)
                 ]
             )
@@ -208,8 +210,9 @@ class UNVT_iot_alarm(base.Structure):
         self.__sequence_number = base.Scaled(
             size=1,
             signed=False,
+            invalid=255,
             minimum=0,
-            maximum=127
+            maximum=254
         )
         self._register(('sequence_number', self.__sequence_number))
 

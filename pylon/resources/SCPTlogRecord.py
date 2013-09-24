@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -227,8 +227,7 @@ class SCPTlogRecord(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=2,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..3')
@@ -254,8 +253,7 @@ class SCPTlogRecord(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=3,
-                offset=2,
-                signed=False
+                offset=2
             )
         else:
             raise ValueError('Not in range 0..3')
@@ -280,8 +278,7 @@ class SCPTlogRecord(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=5,
-                signed=False
+                offset=5
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -306,8 +303,7 @@ class SCPTlogRecord(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=6,
-                signed=False
+                offset=6
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -332,8 +328,7 @@ class SCPTlogRecord(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=7,
-                signed=False
+                offset=7
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -429,17 +424,13 @@ class SCPTlogRecord(base.Structure):
                     type(v)
                 )
             )
-        self.__set_timestamp_type(v.__timestamp_type)
-        self.__set_record_type(v.__record_type)
-        self.__set_multiple_input(v.__multiple_input)
-        self.__set_fan_in(v.__fan_in)
-        self.__set_point_status(v.__point_status)
         self.__set_data_length(v.__data_length)
         self.__set_time(v.__time)
         self.__set_member_index(v.__member_index)
         self.__set_data_source_index(v.__data_source_index)
         self.__set_data(v.__data)
         self.__set_point_status_value(v.__point_status_value)
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -60,8 +60,7 @@ class SNVT_state(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -85,8 +84,7 @@ class SNVT_state(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -110,8 +108,7 @@ class SNVT_state(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=2,
-                signed=False
+                offset=2
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -135,8 +132,7 @@ class SNVT_state(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=3,
-                signed=False
+                offset=3
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -160,8 +156,7 @@ class SNVT_state(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -185,8 +180,7 @@ class SNVT_state(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=5,
-                signed=False
+                offset=5
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -210,8 +204,7 @@ class SNVT_state(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=6,
-                signed=False
+                offset=6
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -235,8 +228,7 @@ class SNVT_state(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=7,
-                signed=False
+                offset=7
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -260,8 +252,7 @@ class SNVT_state(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -285,8 +276,7 @@ class SNVT_state(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -310,8 +300,7 @@ class SNVT_state(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=2,
-                signed=False
+                offset=2
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -335,8 +324,7 @@ class SNVT_state(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=3,
-                signed=False
+                offset=3
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -360,8 +348,7 @@ class SNVT_state(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -385,8 +372,7 @@ class SNVT_state(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=5,
-                signed=False
+                offset=5
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -410,8 +396,7 @@ class SNVT_state(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=6,
-                signed=False
+                offset=6
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -435,8 +420,7 @@ class SNVT_state(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=7,
-                signed=False
+                offset=7
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -464,22 +448,8 @@ class SNVT_state(base.Structure):
                     type(v)
                 )
             )
-        self.__set_bit0(v.__bit0)
-        self.__set_bit1(v.__bit1)
-        self.__set_bit2(v.__bit2)
-        self.__set_bit3(v.__bit3)
-        self.__set_bit4(v.__bit4)
-        self.__set_bit5(v.__bit5)
-        self.__set_bit6(v.__bit6)
-        self.__set_bit7(v.__bit7)
-        self.__set_bit8(v.__bit8)
-        self.__set_bit9(v.__bit9)
-        self.__set_bit10(v.__bit10)
-        self.__set_bit11(v.__bit11)
-        self.__set_bit12(v.__bit12)
-        self.__set_bit13(v.__bit13)
-        self.__set_bit14(v.__bit14)
-        self.__set_bit15(v.__bit15)
+        self.___bf01._value = v.___bf01._value
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

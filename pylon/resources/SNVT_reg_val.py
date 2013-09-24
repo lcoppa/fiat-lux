@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -86,8 +86,7 @@ class SNVT_reg_val(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=3,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..7')
@@ -117,7 +116,7 @@ class SNVT_reg_val(base.Structure):
             )
         self.__set_raw(v.__raw)
         self.__set_unit(v.__unit)
-        self.__set_nr_decimals(v.__nr_decimals)
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

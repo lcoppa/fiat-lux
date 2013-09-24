@@ -179,11 +179,11 @@ class InterfaceData(ctypes.Structure):
         not confuse _signature with __hash__.
         """
         signature = self.StaticNvCount + \
-            self.NvTblSize << 2 + \
-            self.DomainTblSize << 3 + \
-            self.AddrTblSize << 4 + \
-            self.AliasTblSize << 6 + \
-            self.BindableMsgTagCount << 8
+            (self.NvTblSize << 2) + \
+            (self.DomainTblSize << 3) + \
+            (self.AddrTblSize << 4) + \
+            (self.AliasTblSize << 6) + \
+            (self.BindableMsgTagCount << 8)
         signature += toolkit.simple_checksum(self.NodeSdString)
         signature += toolkit.simple_checksum(self.ProgramId)
 
@@ -264,8 +264,8 @@ class ApplicationBuffers(ctypes.Structure):
         not confuse _signature with __hash__.
         """
         return self.PriorityMsgOutCount + \
-            self.NonPriorityMsgOutCount << 3 + \
-            self.MsgInCount << 5
+           (self.NonPriorityMsgOutCount << 3) + \
+           (self.MsgInCount << 5)
 
 
 class LinkLayerBuffers(ctypes.Structure):
@@ -320,10 +320,10 @@ class TransceiverBuffers(ctypes.Structure):
         not confuse _signature with __hash__.
         """
         return self.NetworkBufferInputSize + \
-            self.NetworkBufferOutputSize << 2 + \
-            self.PriorityNetworkOutCount << 4 + \
-            self.NonPriorityNetworkOutCount << 6 + \
-            self.NetworkInCount << 7
+            (self.NetworkBufferOutputSize << 2) + \
+            (self.PriorityNetworkOutCount << 4) + \
+            (self.NonPriorityNetworkOutCount << 6) + \
+            (self.NetworkInCount << 7)
 
 
 class Buffers(ctypes.Structure):
@@ -385,8 +385,8 @@ class ControlData(ctypes.Structure):
         """
         result = self.Buffers._signature() + self.CommParameters._signature()
         result ^= self.ReceiveTransCount ^ \
-            self.TransmitTransCount << 3 ^ \
-            self.TransmitTransIdLifetime << 5
+            (self.TransmitTransCount << 3) ^ \
+            (self.TransmitTransIdLifetime << 5)
         return result
 
 UNIQUE_ID_TYPE = ctypes.c_ubyte * UNIQUE_ID_LENGTH

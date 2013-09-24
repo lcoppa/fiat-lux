@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -73,8 +73,7 @@ class SCPTdevListEntry(base.Union):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -98,8 +97,7 @@ class SCPTdevListEntry(base.Union):
                 self.___bf00._setbits(
                     value=v,
                     size=7,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 1..127')
@@ -129,8 +127,7 @@ class SCPTdevListEntry(base.Union):
                     )
                 )
             self.__set_subnet(v.__subnet)
-            self.__set_unused(v.__unused)
-            self.__set_node(v.__node)
+            self.___bf00._value = v.___bf00._value
 
         _value = property(lambda self: self, __set)
 

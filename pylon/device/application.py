@@ -31,9 +31,11 @@ periodically.
 # THE SOFTWARE.
 #
 import collections
+from functools import wraps
 import logging
 import logging.handlers
 import math
+import queue
 import random
 import threading
 import _thread      # used in runtime < Python 3.3
@@ -54,6 +56,39 @@ from pylon.resources.SCPTnwrkCnfg import SCPTnwrkCnfg
 from pylon.resources.config_source_t import config_source_t
 
 logger = logging.getLogger('pylon-rtk')
+
+def threaded(function):
+    """A decorator to produce thread-safe API.
+
+    The API provided by the Application class is generally only available to
+    the same thread which created the object (which typically is the script's
+    main thread).
+
+    However, some API can be called from any thread. If the calling thread
+    is the object's owner, the call is executed immediately. Otherwise, the
+    call is funnelled through a thread-safe queue, and processed with the next
+    service() invocation.
+
+    Note, however, an important difference between direct and delayed
+    execution: When the API is executed immediately (direct execution), your
+    calling code can and should handle any exceptions that might have occurred
+    during the execution of that API. However, delayed execution occurs at a
+    (slightly) later time and in a different thread. Your calling code cannot
+    respond to exceptions raised in those cases (but the exception details are
+    available from the logfile).
+
+    This decorator function provides the thread safety for decorated API. """
+    @wraps(function)
+    def wrapper(self, *args, **kwargs):
+        if self._threadid != self._get_ident():
+            # Thread violation: enqueue for later, and wake-up:
+            self._function_queue.put((function, args, kwargs))
+            self.signal()
+        else:
+            # OK. Go for it:
+            function(self, *args, **kwargs)
+        return None
+    return wrapper
 
 
 class Application:
@@ -146,7 +181,7 @@ class Application:
 
     def _validate_thread(self):
         """Raise PylonContextError in case of a thread violation."""
-        if self.__threadid != self.__get_ident():
+        if self._threadid != self._get_ident():
             raise toolkit.PylonContextError(
                 toolkit.PylonContextError.WRONG_THREAD,
                 'Not the main pilon thread'
@@ -165,13 +200,33 @@ class Application:
         self._validate_thread()
         self._validate_prestart()
 
-    def _apply_bytes(self, dpi, minimum, maximum, invalid, default):
+    def _apply_bytes(self, dpi, minimum, maximum, invalid, default, name):
         """Apply the minimum, maximum, invalid and default bytes objects,
         if any. In case a default bytes object is provided, this is applied
         last so that the item starts out with these default values. If no
         default bytes object is provided, a temporary default bytes object
         is created using the present values, and re-applied as the default
         at the end of the sequence."""
+
+        def check(dpi, values, label, name):
+            result = values
+            if values and len(dpi) != len(values):
+                logger.warning(
+                    'Cannot apply {0} bytes of {1} value data to {2} '
+                    'of {3} bytes, ignoring {1} value data)'.format(
+                        len(values),
+                        label,
+                        name,
+                        len(dpi)
+                    )
+                )
+                result = None
+            return result
+
+        default = check(dpi, default, 'default', name)
+        minimum = check(dpi, minimum, 'minimum', name)
+        maximum = check(dpi, maximum, 'maximum', name)
+        invalid = check(dpi, invalid, 'invalid', name)
 
         if minimum or maximum or invalid or default:
             # Only do anything if anything is to do at all, but if anything is
@@ -180,6 +235,15 @@ class Application:
             # restore the current (default) value after applying any of the
             # minimum, maximum or invalid bytes objects, because this process
             # modifies the current value.
+
+            if default and len(dpi) != len(default):
+                logger.warning(
+                    'Cannot apply {0} bytes default data to {1} bytes type '
+                    '{2}'.format(
+                        len(default), len(dpi), str(dpi)
+                    )
+                )
+
             if not default:
                 default = dpi._pack()
 
@@ -195,10 +259,11 @@ class Application:
             dpi._unpack(default)
             dpi._accept_as_default()
 
-    def __datapoint(self, object_type, data, flags, name=None, sd=None):
-        """Produce a Datapoint or PropertyDatapoint object.
+    def __single_datapoint(self, object_type, data, flags, name=None, sd=None,
+                           array_size=0, array_index=0):
+        """Produce a single Datapoint or PropertyDatapoint object.
 
-        __datapoint is an internal factory, producing Datapoint and
+        __single_datapoint is an internal factory, producing Datapoint and
         PropertyDatapoint objects. See datapoint() for a public interface.
         """
         self._validate_prestart_context()
@@ -222,7 +287,7 @@ class Application:
 
         dpd.Version = 0
         dpd.Flags = flags
-        dpd.ArrayCount = 0
+        dpd.ArrayCount = array_size
 
         if name:
             dpd.Name = name.encode(
@@ -238,6 +303,7 @@ class Application:
         index = len(self.__datapoints)
 
         dp = object_type(self, index, dpd, data, sd)
+        dp._set_array_aspect(array_size, array_index)
         self.__datapoints.append(dp)
 
         if dp.is_property:
@@ -270,13 +336,20 @@ class Application:
             )
 
         dpi = dp.get_data_item()
-        self._apply_bytes(
-            dpi,
-            dpi._minimum_bytes,
-            dpi._maximum_bytes,
-            dpi._invalid_bytes,
-            dpi._default_bytes
-        )
+        if not isinstance(dpi, base.Inheriting):
+            # Never apply values for inheriting property types. Some DRF define
+            # those, but these values can never be correct in the general case.
+            # (A profile member can define minimum, maximum, invalid and
+            # default value overrides. These are applied, provided they are
+            # provided with the correct size, however.)
+            self._apply_bytes(
+                dpi,
+                dpi._minimum_bytes,
+                dpi._maximum_bytes,
+                dpi._invalid_bytes,
+                dpi._default_bytes,
+                '{0}'.format(type(dpi))
+            )
 
         logger.info('{0} {1}: {2}, "{3}"'.format(
             str(object_type),
@@ -285,6 +358,26 @@ class Application:
             name
         ))
         return dp
+
+    def __datapoint(self, object_type, data, flags, name=None, sd=None,
+                    arraysize=0):
+        """Produce a Datapoint or PropertyDatapoint object.
+
+        __datapoint is an internal factory, producing Datapoint and
+        PropertyDatapoint objects. See datapoint() for a public interface.
+        """
+        if not arraysize:
+            return self.__single_datapoint(object_type, data, flags, name, sd)
+        elif arraysize == 1:
+            raise AttributeError('Array size must be > 1')
+        else:
+            result = []
+            for i in range(arraysize):
+                dp = self.__single_datapoint(
+                    object_type, data, flags, name, sd, arraysize, i
+                )
+                result.append(dp)
+            return tuple(result)
 
     def datapoint(self, data, flags, name=None, sd=None):
         """Create and return a Datapoint object.
@@ -475,11 +568,12 @@ class Application:
 
         # Check some essentials first
         if toolkit.language_version(3, 3):
-            self.__get_ident = threading.get_ident
+            self._get_ident = threading.get_ident
         else:
-            self.__get_ident = _thread.get_ident
+            self._get_ident = _thread.get_ident
 
-        self.__threadid = self.__get_ident()
+        self._threadid = self._get_ident()
+        self._function_queue = queue.Queue()
 
         if Application.__instances:
             raise toolkit.PylonContextError(
@@ -684,7 +778,7 @@ class Application:
 
         for dp in self.__datapoints:
             signature ^= dp.index
-            signature ^= dp._signature() << (dp.index % 4)
+            signature ^= dp._signature() << dp.index % 4
 
         for block in self.__blocks:
             signature ^= block._signature()
@@ -817,11 +911,15 @@ class Application:
             self._stack.register_event_ready(self.__onEventReadyHandler)
 
         #
-        # Register Network Variables, in index order
+        # Register Network Variables, in index order. However, only register
+        # datapoints with an array index of zero; that is, datapoints which are
+        # not part of a datapoint array, and those which implement the first
+        # member of the array.
         #
         for dp in self.__datapoints:
-            logger.info('Registering {0}'.format(dp))
-            self._stack.register_datapoint(dp._dpd)
+            if not dp.array_index:
+                logger.info('Registering {0}'.format(dp))
+                self._stack.register_datapoint(dp._dpd)
 
         self._stack.start_stack()
 
@@ -908,16 +1006,19 @@ class Application:
         stack's event pump. This yields events such as OnUpdate or OnComplete
         events.
 
-        2. service() processes any pending datapoints. These are datapoints
+        2, service() processes any API calls which were made from different
+        threads.
+
+        3. service() processes any pending datapoints. These are datapoints
         enqueued for processing earlier, either through explicit API such as
         Datapoint.poll() or .propagate(), or implicitly by updating the
         datapoint's data. Enqueued input datapoints are polled, output
         datapoints are updated and, unless they are flagged as polled outputs,
         propagated.
 
-        3. service() services the ISI object if ISI is enabled and running.
+        4. service() services the ISI object if ISI is enabled and running.
 
-        4. service() performs lower priority housekeeping tasks.
+        5. service() performs lower priority housekeeping tasks.
 
         You must call the service routine frequently and periodically, and
         it must be called from the same and single thread which owns the
@@ -943,6 +1044,18 @@ class Application:
                 self._stack.event_pump()
             elif not pylon.device.stack.sync_evnt:
                 self._stack.event_pump()
+
+            while not self._function_queue.empty():
+                (function, args, kwargs) = self._function_queue.get()
+                try:
+                    function(self, *args, **kwargs)
+                except Exception as e:
+                    logger.error(
+                        'The delayed call to {0} failed: {1}'.format(
+                            function,
+                            e
+                        )
+                    )
 
             #
             # Process pending items
@@ -1079,6 +1192,7 @@ class Application:
         raise the service signal with this API."""
         self.__service_signal.set()
 
+    @threaded
     def send_service_message(self, drum=True):
         """Send a service message to the network.
 
@@ -1095,8 +1209,12 @@ class Application:
         the service pin message.
 
         When ISI is in use and running, the method also issues an ISI DRUM
-        message unless suppressed with a False drum argument."""
-        self._validate_thread()
+        message unless suppressed with a False drum argument.
+
+        This API may be called from any thread. Calling this API from a thread
+        other than the one which created the ISI object causes the call to be
+        queued for processing in the next service() call.
+        """
         self._stack.send_service_message()
         if self.__isi and self.__isi.is_running() and drum:
             self.__isi.send_drum()
@@ -1287,7 +1405,7 @@ class Application:
         F   is 9 for prototypes, or 8 for certified devices,
         M   is the 20-bit manufacturer identifier,
         C   identifies the program's category and device class,
-        U   details teh program's usage,
+        U   details the program's usage,
         T   describes the physical media used (channel type), and
         N   contains an 8-bit model number.
 
@@ -1460,7 +1578,7 @@ class Application:
         Scripts supporting the interoperable self-installation protocol, ISI,
         must support a service timeout of less than 250ms (0.25), even if the
         script implements a dedicated pilon worker thread.
-        When ISI is in use, pilon must stop waiting for events signalled by
+        When ISI is in use, pilon must stop waiting for events signaled by
         the stack in order to service the ISI engine at least once every 250ms.
     """)
 
@@ -1641,11 +1759,39 @@ class Application:
         else:
             return intended
 
-    def _implement_block_datapoint(self, member, block, snvt_xxx=None):
+    def _normalize_array_desc(self, array_desc):
+        """Produce a normalized version of the array descriptor.
+
+        This is an internally-used tool."""
+        if not isinstance(array_desc, dict):
+            # Try to convert array_desc to an integer and replace the simple
+            # array_desc by the complex general form.
+            normalized = {'*': int(array_desc)}
+        else:
+            normalized = array_desc
+            # Ensure the wildcard
+            if '*' not in normalized:
+                normalized['*'] = 0
+
+        for name in normalized:
+            size = int(normalized[name])
+            if size < 0 or size == 1:
+                raise ValueError(
+                    'Array size must be 0 or > 1, "{0}": {1}'.format(
+                        name,
+                        size
+                    )
+                )
+        return normalized
+
+    def _implement_block_datapoint(self, member, block, array_desc,
+                                   snvt_xxx=None):
         """Implement a member of a block as a datapoint.
 
         This utility is used by the block factory (for mandatory members), and
         by the block's implement() method (for optional members).
+
+        The caller must pass a normalized array descriptor dictionary.
 
         Return the new datapoint object."""
         datatype = member.datatype
@@ -1693,7 +1839,11 @@ class Application:
             member._minimum,
             member._maximum,
             member._invalid,
-            None
+            None,
+            '{0}.{1}'.format(
+                type(block.profile),
+                member.name
+            )
         )
 
         # register datapoint, member block with each other:
@@ -1706,17 +1856,20 @@ class Application:
         #
         for property_name in sorted(member.properties):
             property_member = member.properties[property_name]
+
             if property_member.is_mandatory:
                 self._implement_block_property(
                     member=property_member,
                     block=block,
                     applies_to=dp,
-                    donor=dp
+                    donor=dp,
+                    array_desc=array_desc
                 )
 
         return dp
 
-    def _implement_block_property(self, member, block, applies_to, donor):
+    def _implement_block_property(self, member, block, applies_to, donor,
+                                  array_desc):
         """Implement a property defined in a profile.
 
         The property can apply to one of the block's datapoints, or the block
@@ -1728,6 +1881,7 @@ class Application:
         block       The related block
         applies_to  The item to which the property applies
         donor       Resolves type-inheriting properties, can be None
+        array_desc  The size of the property array, if a choice is permitted.
         """
         declared_type = member.datatype()
 
@@ -1751,6 +1905,56 @@ class Application:
 
         flags = interface.Datapoint.STANDARD | interface.Datapoint.CONFIG_CLASS
 
+        # 'requested' holds the number of array elements requested, if an
+        # array implementation is permitted. This number must be within the
+        # permitted range lower..upper, or zero to indicate that the smallest
+        # possible array, or no array at all, shall be implemented, subject
+        # to the lower and upper array boundaries configured in the profile.
+        array_desc = self._normalize_array_desc(array_desc)
+        try:
+            requested = array_desc[member.name]
+        except KeyError:
+            try:
+                requested = array_desc['*']
+            except KeyError:
+                requested = 0
+
+        # Boundaries defined in the profile:
+        lower = member.array_size_min
+        upper = member.array_size_max
+
+        if 0 < upper < requested:
+            raise AttributeError(
+                '{0} permits arrays with {1}..{2} elements, not {3}'.format(
+                    member.name,
+                    lower,
+                    upper,
+                    requested
+                )
+            )
+        elif requested and not upper:
+            raise AttributeError(
+                '{0} is prevented from array implementations'.format(
+                    member.name
+                )
+            )
+        elif requested == 1:
+            raise AttributeError('An array size of 1 is not supported')
+        elif requested and (requested < lower or requested > upper):
+            raise AttributeError(
+                'The {0} array size must be {1}..{2}, not including 1'.format(
+                    member.name,
+                    lower,
+                    upper
+                )
+            )
+        elif lower == upper or not requested:
+            # No choice, the profile requires this size (could be zero or >1),
+            # or the request asks for the smallest implementation possible.
+            elements = lower
+        else:
+            elements = requested
+
         # Create the datapoint. Note that the SD string is compiled
         # later, since the block index may need to change.
         dp = self.__datapoint(
@@ -1760,23 +1964,47 @@ class Application:
             name=self.__ext_name_mangle(
                 self.__dp_names,
                 member.name
+            ),
+            arraysize=elements
+        )
+
+        if not isinstance(dp, collections.Iterable):
+            # single DP:
+            dpi = dp.get_data_item()
+            self._apply_bytes(
+                dpi,
+                member._minimum,
+                member._maximum,
+                member._invalid,
+                member._default,
+                '{0}.{1}'.format(
+                    type(block.profile),
+                    member.name
+                )
             )
-        )
 
-        dpi = dp.get_data_item()
-        self._apply_bytes(
-            dpi,
-            member._minimum,
-            member._maximum,
-            member._invalid,
-            member._default
-        )
+            dp._flags = member._flags | base.PropertyFlags.NONE
 
-        dp._flags = member._flags | base.PropertyFlags.NONE
+            # register datapoint, member block with each other:
+            member._set_implementer(dp)
+            dp._implements(block, member)
+        else:
+            for d in dp:
+                dpi = d.get_data_item()
+                self._apply_bytes(
+                    dpi,
+                    member._minimum,
+                    member._maximum,
+                    member._invalid,
+                    member._default,
+                    '{0}.{1}[]'.format(
+                        type(block.profile),
+                        member.name
+                    )
+                )
+                d._flags = member._flags | base.PropertyFlags.NONE
+                d._implements(block, member)
 
-        # register datapoint, member block with each other:
-        member._set_implementer(dp)
-        dp._implements(block, member)
         applies_to._implement_property(member.name, dp)
         return dp
 
@@ -1855,7 +2083,7 @@ class Application:
         self.__dict__[name] = dp
         return dp
 
-    def block(self, profile, ext_name=None, snvt_xxx=None):
+    def block(self, profile, ext_name=None, snvt_xxx=None, array_desc=0):
         """Create and return a block.
 
         Use this method to create a block, an instance of a profile.
@@ -1870,6 +2098,7 @@ class Application:
         profile     An instance of the profile to implement.
         ext_name    The block's optional external name, or None.
         snvt_xxx    For profiles which include SNVT_xxx members.
+        array_desc  An optional guide to implement property arrays, see below.
 
         Example:
 
@@ -1889,6 +2118,48 @@ class Application:
         This block factory supports only one SNVT_xxx replacement type (as
         provided with this factory argument), which is applied to all SNVT_xxx
         references within the profile (and the inherited profile, if any).
+
+        A mandatory member property which requires a specific array size or
+        prevents implementation as an array will be implemented accordingly.
+
+        For mandatory member properties which support, but do not require, the
+        implementation of an array, or for mandatory member properties which
+        require the implementation as an array within a certain array size
+        range, the default behavior is to implement the smallest possible
+        property construct: not an array if this is permitted, or the smallest
+        array permitted.
+
+        However, the script can supply an optional array descriptor through the
+        array_desc argument to guide the implementation of properties with
+        support for property arrays.
+
+        The array descriptor can be a simple non-negative integer number. The
+        default array descriptor supplies value array_desc=0, leading to the
+        default behavior of implementing the smallest construct possible.
+
+        A more complex form of the descriptor uses a dictionary, which provides
+        a mapping from property member names (using the member names as defined
+        in the profile) and their individual array_desc value.
+        A single asterisk may be used in place of the property name to define a
+        wildcard. The wildcard applies to all not explicitly named property
+        members.
+
+        For example, consider a hypothetical profile with a mandatory property
+        array of linearization points, permitting the implementation of 2…200
+        such points. The following descriptor yields 50 linearization points,
+        and all other mandatory arrays will be implemented as no array,
+        if that choice is available, or in the smallest permitted array:
+
+        array_desc={ 'cpLinearization': 50, '*': 0 }
+
+        Because the wildcard defaults to zero, the following has the same
+        effect:
+
+        array_desc={ 'cpLinearization': 50 }
+
+        (Thus, the simple integer descriptor with numerical value N, therefore,
+        is nothing but a convenient shorthand for array_desc={'*':N}.)
+
         """
         self._validate_prestart_context()
 
@@ -1905,6 +2176,8 @@ class Application:
                 toolkit.PylonInterfaceError.ALREADY_IMPLEMENTED,
                 'A node object is already implemented'
             )
+
+        array_guide = self._normalize_array_desc(array_desc)
 
         block = interface.Block(
             application=self,
@@ -1938,6 +2211,7 @@ class Application:
                 self._implement_block_datapoint(
                     member=member,
                     block=block,
+                    array_desc=array_guide,
                     snvt_xxx=snvt_xxx
                 )
 
@@ -1952,7 +2226,8 @@ class Application:
                     member=property_member,
                     block=block,
                     applies_to=block,
-                    donor=block.principal
+                    donor=block.principal,
+                    array_desc=array_guide
                 )
 
         if isinstance(block.profile, self.__node_object_profile):
@@ -2034,7 +2309,8 @@ class Application:
         #
         if self.__datapoints:
             for datapoint in self.__datapoints:
-                datapoint._compile_self_documentation()
+                if not datapoint.array_index:
+                    datapoint._compile_self_documentation()
 
     # noinspection PyUnusedLocal
     def on_nviRequest_update(self, sender, arguments):

@@ -30,6 +30,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import collections
 import threading
 
 from pylon.device import event
@@ -144,6 +145,9 @@ class Datapoint(Interface):
         self.__index = index		# index, in creation order
         self.__disabled = False
 
+        self.__array_size = 0
+        self.__array_index = 0
+
         self._is_bound = False		# see is_bound property for details
         self.__user_sd = user_sd
 
@@ -157,8 +161,8 @@ class Datapoint(Interface):
         # the corresponding profile member object. These are set through
         # the _implement() method, used by the Application.block() factory.
 
-        self._block = None
-        self._member = None
+        self.__block = None
+        self.__member = None
 
         self.__properties = []
 
@@ -220,6 +224,7 @@ class Datapoint(Interface):
                     self.__application.enqueue(self)
             finally:
                 self._unlock()
+
     #
     #	Properties:
     #
@@ -505,6 +510,66 @@ class Datapoint(Interface):
         subject to the housekeeping_timeout setting."""
     )
 
+    array_size = property(
+        lambda self: self.__array_size,
+        None,
+        None, """Datapoint array size or zero.
+
+        This property is read-only. The array size reports zero for a regular
+        single Datapoint object, and reports N, N > 1, for a Datapoint object
+        which is an element in an Datapoint array. The array_index property
+        provides the zero-based index of this Datapoint object within that
+        array."""
+    )
+
+    array_index = property(
+        lambda self: self.__array_index,
+        None,
+        None, """Zero-based index within a Datapoint array.
+
+        This property is read-only. The array_size reports zero for a regular
+        single Datapoint object, and reports N, N > 1, for a Datapoint object
+        which is an element in an Datapoint array. The array_index property
+        provides the zero-based index of this Datapoint object within that
+        array."""
+    )
+
+    def __set_block(self, v):
+        if not v:
+            self.__block = None
+        elif isinstance(v, Block):
+            self.__block = v
+        else:
+            raise TypeError(
+                'Expected an instance of Block, got {0}'.format(
+                    type(v)
+                )
+            )
+
+    block = property(
+        lambda self: self.__block,
+        __set_block,
+        None, """The block of which this object is a member, or None."""
+    )
+
+    def __set_member(self, v):
+        if not v:
+            self.__member = None
+        elif isinstance(v, base.Profile.Member):
+            self.__member = v
+        else:
+            raise TypeError(
+                'Expected an instance of Profile.Member, got {0}'.format(
+                    type(v)
+                )
+            )
+
+    member = property(
+        lambda self: self.__member,
+        __set_member,
+        None, """The profile member implemented by this object, or None."""
+    )
+
     #
     #	Methods:
     #
@@ -541,14 +606,16 @@ class Datapoint(Interface):
         interoperable interface changes.
         """
         signature = self.__data._signature()
-        signature += self.__index ^ 5 << 3
+        signature += (self.__index ^ 5) << 3
         signature += self.__dpd.Flags
-        signature += toolkit.simple_checksum(self.__safe_name()) ^ 7 << 1
-        signature += toolkit.simple_checksum(self.__safe_sd()) ^ 13 << 5
+        signature += (toolkit.simple_checksum(self.__safe_name()) ^ 7) << 1
+        signature += (toolkit.simple_checksum(self.__safe_sd()) ^ 13) << 5
+        signature += (self.__array_index ^ 23) << 9
+        signature += (self.__array_size ^ 17) << 13
 
         return signature
 
-    #
+    #m
     #   locks, and 'with' statement context management
     #
     def _lock(self, blocking=True, timeout=None):
@@ -603,6 +670,13 @@ class Datapoint(Interface):
             self.__application.enqueue(self)
         return False
 
+    def _set_array_aspect(self, size, index):
+        """Set the array size and array index attributes.
+
+        This is an internal utility used when property arrays are implemented
+        as datapoints."""
+        self.__array_size, self.__array_index = size, index
+
     def poll(self):
         """Request that an input datapoint be refreshed.
 
@@ -653,7 +727,11 @@ class Datapoint(Interface):
         factories.
         """
         self.__properties.append(prop)
-        prop._apply_to(self)
+        if isinstance(prop, collections.Iterable):
+            for element in prop:
+                element._apply_to(self)
+        else:
+            prop._apply_to(self)
         self.__dict__[name] = prop
 
     def _implements(self, block, member):
@@ -663,8 +741,8 @@ class Datapoint(Interface):
         factory calls this and provides the block to which this datapoint
         applies, and the profile member which it implements.
         """
-        self._block = block
-        self._member = member
+        self.__block = block
+        self.__member = member
 
     def _complete_self_documentation(self, sd):
         """Complete generation of the self-documentation.
@@ -675,23 +753,31 @@ class Datapoint(Interface):
         with the stack.
         This method is used by Datapoint and PropertyDatapoint objects.
         """
-        if self.__user_sd:
-            if not sd:
-                sd = ''     # make sure we have a string to append to
-            sd += ';' + self.__user_sd.strip(',; ')
-        if sd:
-            self._dpd.SdString = toolkit.ebcdic(sd)
+        if not self.__array_index:
+            # Only Datapoint objects with array index zero have SD (that is,
+            # those datapoints which are not member of a datapoint array, or
+            # those implementing the first element of a datapoint array.
+            # Subsequent datapoint array elements have no SD and are implicitly
+            # registered with the stack.
+            if self.__user_sd:
+                if not sd:
+                    sd = ''     # make sure we have a string to append to
+                sd += ';' + self.__user_sd.strip(',; ')
+            if sd:
+                self._dpd.SdString = toolkit.ebcdic(sd)
+        else:
+            self._dpd.SdString = None
 
     def _compile_self_documentation(self):
         """Compute the datapoint's own self-documentation.
 
         This method is used by Application.__compile_sd().
         """
-        if self._block and self._member:
+        if self.__block and self.__member and not self.__array_index:
             sd = '@{0}{1}{2}'.format(
-                self._block.index,
-                self._member.selector,
-                self._member.number
+                self.__block.index,
+                self.__member.selector,
+                self.__member.number
             )
             if self.is_changeable_type:
                 sd += '?'
@@ -700,24 +786,36 @@ class Datapoint(Interface):
 
         self._complete_self_documentation(sd)
 
-    def implement(self, name):
+    def implement(self, name, array_size=0):
         """Implement an optional property by name.
 
         Arguments:
 
-        name        the property name as defined in the profile
+        name        The property name as defined in the profile
+        array_size  The size of the property array, if any.
 
         The method returns the new item.
+
+        For property members which support an implementation as a property
+        array, where the implementation is free to chose the size of the
+        property array, the array_size argument determines the size of that
+        array. array_size=0, the default value, yields the implementation of
+        the smallest possible construct: no array if permitted, or the smallest
+        permitted array.
+
+        When array_size applies, it must be within the range of minimum to
+        maximum permitted array size, as defined in the profile.
+
         """
-        if not self._block or not self._member:
+        if not self.__block or not self.__member:
             raise AttributeError(
                 'Can only apply properties to datapoint profile members'
             )
 
         self.__application._validate_prestart()
 
-        if name in self._member.properties:
-            member = self._member.properties[name]
+        if name in self.__member.properties:
+            member = self.__member.properties[name]
         else:
             raise LookupError(
                 'Not found: property {0}'. format(
@@ -736,9 +834,10 @@ class Datapoint(Interface):
         if isinstance(member, base.Profile.PropertyMember):
             dp = self.__application._implement_block_property(
                 member=member,
-                block=self._block,
+                block=self.__block,
                 applies_to=self,
-                donor=self
+                donor=self,
+                array_desc=array_size
             )
         else:
             raise TypeError(
@@ -825,8 +924,13 @@ class PropertyDatapoint(Datapoint):
 
         This method is used by Application.__compile_sd().
         """
-        sd = '&'
+        #   For a property implemented as a Datapoint:
+        #
+        #   SD ::= &header,select,flags,index,[array_size],[rangemod],[?][;rem]
 
+        sd = '&'    #   &
+
+        #   &header,select
         if not self.__applies_to:
             # device property
             sd += '0,'
@@ -842,16 +946,20 @@ class PropertyDatapoint(Datapoint):
         # We compose the SD string with an embedded \x escape code, which we
         # transcode later. This detour is required because the 'ascii'
         # encoding is limited to a value range(128) only.
+        #
+        #   ,flags,index
         sd += ',{0}{1},{2}'.format(
             data_item._property_scope,
             chr(self._flags),
             data_item._property_key
         )
 
-        # ### TODO REMINDER: add CP array support
+        if self.array_size:
+            #   ,[array_size],[range_mod],[?]
+            sd += ',{0}'.format(self.array_size)
+
         # ### TODO REMINDER: consider adding range-mod support
         # ### TODO REMINDER: add changeable-type support
-#        sd += ',,,'
 
         self._complete_self_documentation(sd)
 
@@ -880,6 +988,9 @@ class Block(Interface):
         self.__principal = None
 
         self.status = SNVT_obj_status(object_id=index)
+
+        self.__array_index = 0
+        self.__array_size = 0
 
     datapoints = property(
         lambda self: tuple(self.__datapoints),
@@ -926,6 +1037,60 @@ class Block(Interface):
         None, """The profile implemented by this block."""
     )
 
+    def __set_array_index(self, v):
+        self.__array_index = int(v)
+
+    array_index = property(
+        lambda self: self.__array_index,
+        __set_array_index,
+        None, """The index within an array of blocks.
+
+        This property is provided to assist scripts which group block objects
+        into a container (a tuple, a list, a set, etc) and share code, such as
+        update event handler for member input datapoints, among those blocks.
+
+        Such a script could create a tuple of four block object using the block
+        factory in a generator expression, then assign array_index and
+        array_size values to each of the elements of this block container.
+
+        When the shared update event handler processes an input datapoint value
+        update, it can determine the associated datapoint from the event
+        handler's 'sender' argument. This datapoint object reports the block it
+        applies to, if any, through its 'block' property, and the block might
+        then reveal its index within the script-specific tuple through this
+        property.
+
+        Grouping similar blocks in this manner is optional."""
+    )
+
+    def __set_array_size(self, v):
+        self.__array_size = int(v)
+
+    array_size = property(
+        lambda self: self.__array_size,
+        __set_array_size,
+        None, """The size of an array of blocks.
+
+        This property is provided to assist scripts which group block objects
+        into a container (a tuple, a list, a set, etc) and share code, such as
+        update event handler for member input datapoints, among those blocks.
+
+        Such a script could create a tuple of four block object using the block
+        factory in a generator expression, then assign array_index and
+        array_size values to each of the elements of this block container.
+
+        When the shared update event handler processes an input datapoint value
+        update, it can determine the associated datapoint from the event
+        handler's 'sender' argument. This datapoint object reports the block it
+        applies to, if any, through its 'block' property, and the block might
+        then reveal its index within the script-specific tuple through this
+        property.
+
+        The array_size property can be useful in similar use-cases.
+
+        Grouping similar blocks in this manner is optional."""
+    )
+
     def __set_is_disabled(self, v):
         """Internal setter, used by the is_disabled property."""
         self.status.disabled = v
@@ -959,7 +1124,7 @@ class Block(Interface):
         if name == self.__profile.principal:
             self.__principal = datapoint
 
-    def _implement_property(self, name, prop):
+    def _implement_property(self, name, property_):
         """Register the implementation of a property member with the block.
 
         The method creates an instance variable within the block object, which
@@ -969,9 +1134,15 @@ class Block(Interface):
         This function is used by the Application.block() and datapoint()
         factories.
         """
-        self.__properties.append(prop)
-        prop._apply_to(self)
-        self.__dict__[name] = prop
+        self.__properties.append(property_)
+
+        if isinstance(property_, collections.Iterable):
+            for element in property_:
+                element._apply_to(self)
+        else:   # single property
+            property_._apply_to(self)
+
+        self.__dict__[name] = property_
 
     def _signature(self):
         """Return a 32-bit signature for this item.
@@ -999,12 +1170,13 @@ class Block(Interface):
             sd += self.__ext_name
         return sd
 
-    def implement(self, name):
+    def implement(self, name, array_desc=0):
         """Implement an optional datapoint or property member by name.
 
         Arguments:
 
         name        the member name as defined in the profile
+        array_desc  the array descriptor object or array size. See below.
 
         The method returns the new item. The method searches the desired member
         in this order:
@@ -1012,6 +1184,9 @@ class Block(Interface):
         2. datapoint members defined in the inherited profile (if any)
         3. property members defined in this profile
         4. property members defined in the inherited profile (if any)
+
+        The array descriptor, if provided, must meet the rules described with
+        the Application.block() factory method.
         """
         self.__application._validate_prestart()
 
@@ -1030,10 +1205,13 @@ class Block(Interface):
         if member.implementer:
             return member.implementer
 
+        array_guide = self.__application._normalize_array_desc(array_desc)
+
         if isinstance(member, base.Profile.DatapointMember):
             dp = self.__application._implement_block_datapoint(
                 member=member,
                 block=self,
+                array_desc=array_guide,
                 snvt_xxx=self.__snvt_xxx
             )
         elif isinstance(member, base.Profile.PropertyMember):
@@ -1041,6 +1219,7 @@ class Block(Interface):
                 member=member,
                 block=self,
                 applies_to=self,
+                array_desc=array_guide,
                 donor=self.__principal
             )
         else:

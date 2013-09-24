@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -68,8 +68,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -94,8 +93,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=1,
-                        signed=False
+                        offset=1
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -120,8 +118,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=2,
-                        signed=False
+                        offset=2
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -146,8 +143,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=3,
-                        signed=False
+                        offset=3
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -172,8 +168,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=4,
-                        offset=4,
-                        signed=False
+                        offset=4
                     )
                 else:
                     raise ValueError('Not in range 0..15')
@@ -197,8 +192,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf01._setbits(
                         value=v,
                         size=8,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..255')
@@ -222,8 +216,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf02._setbits(
                         value=v,
                         size=8,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..255')
@@ -251,13 +244,9 @@ class SNVT_dev_maint(base.Structure):
                             type(v)
                         )
                     )
-                self.__set_service_required(v.__service_required)
-                self.__set_bearings_change(v.__bearings_change)
-                self.__set_bearings_lubricate(v.__bearings_lubricate)
-                self.__set_shaftseal_change(v.__shaftseal_change)
-                self.__set_reserved1_4_7(v.__reserved1_4_7)
-                self.__set_reserved2_0_7(v.__reserved2_0_7)
-                self.__set_reserved3_0_7(v.__reserved3_0_7)
+                self.___bf02._value = v.___bf02._value
+                self.___bf01._value = v.___bf01._value
+                self.___bf00._value = v.___bf00._value
 
             _value = property(lambda self: self, __set)
 
@@ -295,8 +284,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -320,8 +308,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=1,
-                        signed=False
+                        offset=1
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -346,8 +333,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=2,
-                        signed=False
+                        offset=2
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -372,8 +358,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=3,
-                        signed=False
+                        offset=3
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -398,8 +383,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=4,
-                        signed=False
+                        offset=4
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -423,8 +407,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=5,
-                        signed=False
+                        offset=5
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -449,8 +432,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=6,
-                        signed=False
+                        offset=6
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -474,8 +456,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=7,
-                        signed=False
+                        offset=7
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -499,8 +480,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf01._setbits(
                         value=v,
                         size=8,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..255')
@@ -524,8 +504,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf02._setbits(
                         value=v,
                         size=7,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..127')
@@ -549,8 +528,7 @@ class SNVT_dev_maint(base.Structure):
                     self.___bf02._setbits(
                         value=v,
                         size=1,
-                        offset=7,
-                        signed=False
+                        offset=7
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -580,17 +558,9 @@ class SNVT_dev_maint(base.Structure):
                             type(v)
                         )
                     )
-                self.__set_motor_maint(v.__motor_maint)
-                self.__set_packing_change(v.__packing_change)
-                self.__set_electronics_check(v.__electronics_check)
-                self.__set_positioning_check(v.__positioning_check)
-                self.__set_lubrication_check(v.__lubrication_check)
-                self.__set_return_check(v.__return_check)
-                self.__set_battery_check(v.__battery_check)
-                self.__set_reserved1_7(v.__reserved1_7)
-                self.__set_reserved2_0_7(v.__reserved2_0_7)
-                self.__set_reserved3_0_6(v.__reserved3_0_6)
-                self.__set_general_maint(v.__general_maint)
+                self.___bf02._value = v.___bf02._value
+                self.___bf01._value = v.___bf01._value
+                self.___bf00._value = v.___bf00._value
 
             _value = property(lambda self: self, __set)
 

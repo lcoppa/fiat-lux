@@ -44,6 +44,7 @@ class SNVT_xxx(base.DataType):
     instantiated."""
 
     def __init__(self):
+        super().__init__()
         raise toolkit.PylonInterfaceError(
             toolkit.PylonInterfaceError.SNVT_XXX,
             'SNVT_xxx cannot be implemented'

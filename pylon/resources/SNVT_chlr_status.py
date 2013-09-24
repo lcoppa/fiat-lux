@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -55,8 +55,7 @@ class SNVT_chlr_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -80,8 +79,7 @@ class SNVT_chlr_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -105,8 +103,7 @@ class SNVT_chlr_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -130,8 +127,7 @@ class SNVT_chlr_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -156,8 +152,7 @@ class SNVT_chlr_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -181,8 +176,7 @@ class SNVT_chlr_status(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -210,12 +204,7 @@ class SNVT_chlr_status(base.Structure):
                         type(v)
                     )
                 )
-            self.__set_in_alarm(v.__in_alarm)
-            self.__set_run_enabled(v.__run_enabled)
-            self.__set_local(v.__local)
-            self.__set_limited(v.__limited)
-            self.__set_chw_flow(v.__chw_flow)
-            self.__set_condw_flow(v.__condw_flow)
+            self.___bf00._value = v.___bf00._value
 
         _value = property(lambda self: self, __set)
 

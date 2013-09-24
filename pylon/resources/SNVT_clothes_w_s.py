@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -90,8 +90,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -115,8 +114,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -140,8 +138,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -165,8 +162,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -190,8 +186,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -215,8 +210,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -240,8 +234,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -265,8 +258,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf00._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -290,8 +282,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -315,8 +306,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -340,8 +330,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -365,8 +354,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -390,8 +378,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -415,8 +402,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -440,8 +426,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -465,8 +450,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf01._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -490,8 +474,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -515,8 +498,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -540,8 +522,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -565,8 +546,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -590,8 +570,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -615,8 +594,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -640,8 +618,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -665,8 +642,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf02._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -690,8 +666,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -715,8 +690,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=1,
-                    signed=False
+                    offset=1
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -740,8 +714,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=2,
-                    signed=False
+                    offset=2
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -765,8 +738,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=3,
-                    signed=False
+                    offset=3
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -790,8 +762,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=4,
-                    signed=False
+                    offset=4
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -815,8 +786,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=5,
-                    signed=False
+                    offset=5
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -840,8 +810,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=6,
-                    signed=False
+                    offset=6
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -865,8 +834,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf03._setbits(
                     value=v,
                     size=1,
-                    offset=7,
-                    signed=False
+                    offset=7
                 )
             else:
                 raise ValueError('Not in range 0..1')
@@ -890,8 +858,7 @@ class SNVT_clothes_w_s(base.Structure):
                 self.___bf04._setbits(
                     value=v,
                     size=8,
-                    offset=0,
-                    signed=False
+                    offset=0
                 )
             else:
                 raise ValueError('Not in range 0..255')
@@ -929,40 +896,12 @@ class SNVT_clothes_w_s(base.Structure):
                         type(v)
                     )
                 )
-            self.__set_alarm_reset(v.__alarm_reset)
-            self.__set_war_water_supply(v.__war_water_supply)
-            self.__set_war_drain_slow(v.__war_drain_slow)
-            self.__set_war_door_open(v.__war_door_open)
-            self.__set_war_load_unbalanced(v.__war_load_unbalanced)
-            self.__set_war_filter_cleaning(v.__war_filter_cleaning)
-            self.__set_war_hoses_reversed(v.__war_hoses_reversed)
-            self.__set_war_voltage_low(v.__war_voltage_low)
-            self.__set_war_power_failure(v.__war_power_failure)
-            self.__set_war_drain_open(v.__war_drain_open)
-            self.__set_war_execute_fail(v.__war_execute_fail)
-            self.__set_war_door_locked(v.__war_door_locked)
-            self.__set_war_service(v.__war_service)
-            self.__set_war_rsrvd5(v.__war_rsrvd5)
-            self.__set_war_rsrvd6(v.__war_rsrvd6)
-            self.__set_war_rsrvd7(v.__war_rsrvd7)
-            self.__set_err_motor_stall(v.__err_motor_stall)
-            self.__set_err_water_temp(v.__err_water_temp)
-            self.__set_err_pressure(v.__err_pressure)
-            self.__set_err_overflow(v.__err_overflow)
-            self.__set_err_water_heat(v.__err_water_heat)
-            self.__set_err_water_leak(v.__err_water_leak)
-            self.__set_err_motor_speed(v.__err_motor_speed)
-            self.__set_err_wash_thermistor(v.__err_wash_thermistor)
-            self.__set_err_dry_thermistor(v.__err_dry_thermistor)
-            self.__set_err_dry_overheat(v.__err_dry_overheat)
-            self.__set_err_dry_heating(v.__err_dry_heating)
-            self.__set_err_dry_fan(v.__err_dry_fan)
-            self.__set_err_rsrvd4(v.__err_rsrvd4)
-            self.__set_err_rsrvd5(v.__err_rsrvd5)
-            self.__set_err_rsrvd6(v.__err_rsrvd6)
-            self.__set_err_rsrvd7(v.__err_rsrvd7)
-            self.__set_err_rsrvd0_7(v.__err_rsrvd0_7)
             self.__set_manuf_code(v.__manuf_code)
+            self.___bf04._value = v.___bf04._value
+            self.___bf03._value = v.___bf03._value
+            self.___bf02._value = v.___bf02._value
+            self.___bf01._value = v.___bf01._value
+            self.___bf00._value = v.___bf00._value
 
         _value = property(lambda self: self, __set)
 

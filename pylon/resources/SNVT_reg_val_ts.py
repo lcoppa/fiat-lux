@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -135,8 +135,7 @@ class SNVT_reg_val_ts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=3,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..7')
@@ -160,8 +159,7 @@ class SNVT_reg_val_ts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=4,
-                offset=3,
-                signed=False
+                offset=3
             )
         else:
             raise ValueError('Not in range 0..15')
@@ -185,8 +183,7 @@ class SNVT_reg_val_ts(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=7,
-                signed=False
+                offset=7
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -277,15 +274,13 @@ class SNVT_reg_val_ts(base.Structure):
             )
         self.__set_raw(v.__raw)
         self.__set_unit(v.__unit)
-        self.__set_nr_decimals(v.__nr_decimals)
-        self.__set_status(v.__status)
-        self.__set_reg_state(v.__reg_state)
         self.__set_year(v.__year)
         self.__set_month(v.__month)
         self.__set_day(v.__day)
         self.__set_hour(v.__hour)
         self.__set_minute(v.__minute)
         self.__set_second(v.__second)
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

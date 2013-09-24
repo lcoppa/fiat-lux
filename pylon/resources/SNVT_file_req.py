@@ -25,7 +25,7 @@ set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -157,8 +157,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -182,8 +181,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=7,
-                        offset=1,
-                        signed=False
+                        offset=1
                     )
                 else:
                     raise ValueError('Not in range 0..127')
@@ -208,8 +206,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf01._setbits(
                         value=v,
                         size=4,
-                        offset=4,
-                        signed=False
+                        offset=4
                     )
                 else:
                     raise ValueError('Not in range 0..15')
@@ -233,8 +230,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf02._setbits(
                         value=v,
                         size=4,
-                        offset=4,
-                        signed=False
+                        offset=4
                     )
                 else:
                     raise ValueError('Not in range 0..15')
@@ -274,11 +270,10 @@ class SNVT_file_req(base.Structure):
                         )
                     )
                 self.__set_type_(v.__type_)
-                self.__set_domain(v.__domain)
-                self.__set_node(v.__node)
-                self.__set_retry(v.__retry)
-                self.__set_tx_timer(v.__tx_timer)
                 self.__set_subnet(v.__subnet)
+                self.___bf02._value = v.___bf02._value
+                self.___bf01._value = v.___bf01._value
+                self.___bf00._value = v.___bf00._value
 
             _value = property(lambda self: self, __set)
 
@@ -330,8 +325,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=1,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -355,8 +349,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf00._setbits(
                         value=v,
                         size=7,
-                        offset=1,
-                        signed=False
+                        offset=1
                     )
                 else:
                     raise ValueError('Not in range 0..65')
@@ -381,8 +374,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf01._setbits(
                         value=v,
                         size=1,
-                        offset=0,
-                        signed=False
+                        offset=0
                     )
                 else:
                     raise ValueError('Not in range 0..1')
@@ -406,8 +398,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf01._setbits(
                         value=v,
                         size=7,
-                        offset=1,
-                        signed=False
+                        offset=1
                     )
                 else:
                     raise ValueError('Not in range 0..0')
@@ -431,8 +422,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf02._setbits(
                         value=v,
                         size=4,
-                        offset=4,
-                        signed=False
+                        offset=4
                     )
                 else:
                     raise ValueError('Not in range 0..15')
@@ -456,8 +446,7 @@ class SNVT_file_req(base.Structure):
                     self.___bf03._setbits(
                         value=v,
                         size=4,
-                        offset=4,
-                        signed=False
+                        offset=4
                     )
                 else:
                     raise ValueError('Not in range 0..15')
@@ -495,13 +484,11 @@ class SNVT_file_req(base.Structure):
                             type(v)
                         )
                     )
-                self.__set_type_(v.__type_)
-                self.__set_size(v.__size)
-                self.__set_domain(v.__domain)
-                self.__set_unused(v.__unused)
-                self.__set_retry(v.__retry)
-                self.__set_tx_timer(v.__tx_timer)
                 self.__set_group(v.__group)
+                self.___bf03._value = v.___bf03._value
+                self.___bf02._value = v.___bf02._value
+                self.___bf01._value = v.___bf01._value
+                self.___bf00._value = v.___bf00._value
 
             _value = property(lambda self: self, __set)
 

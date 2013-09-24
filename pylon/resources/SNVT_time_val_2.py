@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -74,8 +74,7 @@ class SNVT_time_val_2(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -101,8 +100,7 @@ class SNVT_time_val_2(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -128,8 +126,7 @@ class SNVT_time_val_2(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=2,
-                signed=False
+                offset=2
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -156,8 +153,7 @@ class SNVT_time_val_2(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=5,
-                offset=3,
-                signed=False
+                offset=3
             )
         else:
             raise ValueError('Not in range 0..31')
@@ -182,8 +178,7 @@ class SNVT_time_val_2(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -208,8 +203,7 @@ class SNVT_time_val_2(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=1,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -234,8 +228,7 @@ class SNVT_time_val_2(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=6,
-                offset=2,
-                signed=False
+                offset=2
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -285,15 +278,10 @@ class SNVT_time_val_2(base.Structure):
                     type(v)
                 )
             )
-        self.__set_sunrise_relative_flag(v.__sunrise_relative_flag)
-        self.__set_sunset_relative_flag(v.__sunset_relative_flag)
-        self.__set_negative_time_offset_flag(v.__negative_time_offset_flag)
-        self.__set_hour(v.__hour)
-        self.__set_occ_value_ignored_flag(v.__occ_value_ignored_flag)
-        self.__set_gp_value_ignored_flag(v.__gp_value_ignored_flag)
-        self.__set_minutes(v.__minutes)
         self.__set_occupancy(v.__occupancy)
         self.__set_gp_value(v.__gp_value)
+        self.___bf01._value = v.___bf01._value
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

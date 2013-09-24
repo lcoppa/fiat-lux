@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -80,8 +80,7 @@ class SNVT_trans_table(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=2,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -105,8 +104,7 @@ class SNVT_trans_table(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=2,
-                offset=2,
-                signed=False
+                offset=2
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -130,8 +128,7 @@ class SNVT_trans_table(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=2,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -155,8 +152,7 @@ class SNVT_trans_table(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=2,
-                offset=6,
-                signed=False
+                offset=6
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -180,8 +176,7 @@ class SNVT_trans_table(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=2,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -205,8 +200,7 @@ class SNVT_trans_table(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=2,
-                offset=2,
-                signed=False
+                offset=2
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -230,8 +224,7 @@ class SNVT_trans_table(base.Structure):
             self.___bf01._setbits(
                 value=v,
                 size=2,
-                offset=4,
-                signed=False
+                offset=4
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -262,13 +255,8 @@ class SNVT_trans_table(base.Structure):
                 )
             )
         self.__set_point(v.__point)
-        self.__set_interp_pts_0_to_1(v.__interp_pts_0_to_1)
-        self.__set_interp_pts_1_to_2(v.__interp_pts_1_to_2)
-        self.__set_interp_pts_2_to_3(v.__interp_pts_2_to_3)
-        self.__set_interp_pts_3_to_4(v.__interp_pts_3_to_4)
-        self.__set_interp_pts_4_to_5(v.__interp_pts_4_to_5)
-        self.__set_interp_pts_5_to_6(v.__interp_pts_5_to_6)
-        self.__set_interp_pts_6_to_0(v.__interp_pts_6_to_0)
+        self.___bf01._value = v.___bf01._value
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

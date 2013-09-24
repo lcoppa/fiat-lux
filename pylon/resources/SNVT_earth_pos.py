@@ -25,7 +25,7 @@ file set standard 00:00:00:00:00:00:00:00-0.  """
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -98,8 +98,7 @@ class SNVT_earth_pos(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -124,8 +123,7 @@ class SNVT_earth_pos(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=1,
-                signed=False
+                offset=1
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -204,13 +202,12 @@ class SNVT_earth_pos(base.Structure):
                     type(v)
                 )
             )
-        self.__set_latitude_direction(v.__latitude_direction)
-        self.__set_longitude_direction(v.__longitude_direction)
         self.__set_latitude_deg(v.__latitude_deg)
         self.__set_latitude_min(v.__latitude_min)
         self.__set_longitude_deg(v.__longitude_deg)
         self.__set_longitude_min(v.__longitude_min)
         self.__set_height_above_sea(v.__height_above_sea)
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

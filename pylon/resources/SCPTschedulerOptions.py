@@ -25,7 +25,7 @@ resource file set standard 00:00:00:00:00:00:00:00-0."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 05-Sep-2013 10:50.
+# Generated at 12-Sep-2013 11:27.
 
 from pylon.resources import base
 from pylon.resources.standard import standard
@@ -53,8 +53,7 @@ class SCPTschedulerOptions(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=5,
-                offset=0,
-                signed=False
+                offset=0
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -78,8 +77,7 @@ class SCPTschedulerOptions(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=5,
-                signed=False
+                offset=5
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -105,8 +103,7 @@ class SCPTschedulerOptions(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=6,
-                signed=False
+                offset=6
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -131,8 +128,7 @@ class SCPTschedulerOptions(base.Structure):
             self.___bf00._setbits(
                 value=v,
                 size=1,
-                offset=7,
-                signed=False
+                offset=7
             )
         else:
             raise ValueError('Not in range 0..1')
@@ -163,10 +159,7 @@ class SCPTschedulerOptions(base.Structure):
                     type(v)
                 )
             )
-        self.__set_reserved(v.__reserved)
-        self.__set_alternate_time_source(v.__alternate_time_source)
-        self.__set_general_purpose_output(v.__general_purpose_output)
-        self.__set_sunrise_sunset_relative(v.__sunrise_sunset_relative)
+        self.___bf00._value = v.___bf00._value
 
     _value = property(lambda self: self, __set)
 

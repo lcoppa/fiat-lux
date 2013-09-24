@@ -135,7 +135,7 @@ class Type(toolkit.PilonObject):
         interoperable interface changes.
         """
         seed = 0x400000 if self.__obsolete else 0
-        return seed | (self.__key << 3 + self.__scope)
+        return seed | ((self.__key << 3) + self.__scope)
 
 
 class Definition(toolkit.PilonObject):
@@ -559,7 +559,7 @@ class Scaled(DataType):
         on a given physical device (hardware), unless an aspect affecting the
         interoperable interface changes.
         """
-        return super()._signature() + self.__size ^ 5 << 7
+        return super()._signature() + (self.__size ^ 5) << 7
 
     def _accept_as_minimum(self):
         """Accept the current value as the minimum value.
@@ -1359,7 +1359,7 @@ class Array(DataType):
                 type(self),
                 type(v)
             ))
-        for i in range(len(self._elements)):
+        for i in range(min(len(self._elements), len(v._elements))):
             self._elements[i]._value = v._elements[i]._value
 
     _value = property(
@@ -1614,7 +1614,7 @@ class Profile(Type):
         )
 
         _maximum = property(
-            lambda self: self.__minimum,
+            lambda self: self.__maximum,
             None,
             None, """Return the 'maximum' bytes object or None."""
         )
@@ -1645,7 +1645,7 @@ class Profile(Type):
             # note that we CS repr(datatype) - because this is a type, not
             # an instance, we can't have it compute its own _signature()
             return toolkit.simple_checksum(self.__name) ^ \
-                (self.__number ^ 13 << 12) ^ \
+                ((self.__number ^ 13) << 12) ^ \
                 self.__is_mandatory ^ \
                 toolkit.simple_checksum(repr(self.__datatype))
 
@@ -1754,8 +1754,8 @@ class Profile(Type):
             affecting the interoperable interface changes.
             """
             signature = super()._signature() + \
-                self.__is_output << 11 + \
-                self.__is_polled << 13
+                (self.__is_output << 11) + \
+                (self.__is_polled << 13)
             return signature
 
         def __str__(self):
@@ -1775,7 +1775,7 @@ class Profile(Type):
         #
 
         def __init__(self, name, profile, number, datatype, mandatory,
-                     min_array=0, max_array=0,
+                     array_size_min=0, array_size_max=0,
                      flags=PropertyFlags.NONE,
                      minimum=None,
                      maximum=None,
@@ -1790,23 +1790,41 @@ class Profile(Type):
             number      the member number, as defined with the profile
             datatype    The type to use (not an instance of the type!)
             mandatory   True for mandatory profile members
-            min_array   Minimum size for CP array
-            max_array   Maximum size for CP array
+            array_size_min   Minimum size for array implementation, see below.
+            array_size_max   Maximum size for array implementation, see below.
             flags       See base.PropertyFlags.DEVICE_SPECIFIC, MFG, RESET, etc
             minimum     Set to None or provide bytes object. See Profile.Member
             maximum     Set to None or provide bytes object. See Profile.Member
             invalid     Set to None or provide bytes object. See Profile.Member
             default     Set to None or provide bytes object. See Profile.Member
 
-            Array boundary requirements are specified as follows:
+            A property is typically implemented as a single property. For
+            example, a thermostat profile might include a property to configure
+            the temperature setpoint increment during night mode.
 
-            min_array == 0 and max_array == 0:
+            However, profiles can require that a property be implemented as a
+            property array with Z elements. The profile can require Z to be an
+            exact number N, or to be in a N..M range. The profile can also
+            prevent the array implementation.
+
+            For example, a profile can require that the night mode temperature
+            setpoint increment be implemented as a single property, but it can
+            support a linearization curve of 5 to 100 linearization points, and
+            it could support hourly temperature setpoint. The profile might
+            require that the hourly set points are implemented as a property
+            array of 24 elements.
+
+            Aspects related to the implementation as a property array are
+            governed by the array_size_min and array_size_max values as
+            follows:
+
+            array_size_min == 0 and array_size_max == 0:
             Array implementation prohibited
 
-            min_array == N, N>0, max_array == N
+            array_size_min == N, N>0, array_size_max == N
             Array implementation required with size N
 
-            min_array == N, N>=0, max_array == M, M>N:
+            array_size_min == N, N>=0, array_size_max == M, M>N:
             Array implementation permitted, size N..M
             """
             super().__init__(
@@ -1821,18 +1839,12 @@ class Profile(Type):
                 default=default,
                 doc=doc
             )
-            self.__min_array = min_array
-            self.__max_array = max_array
+            self.__array_size_min = array_size_min
+            self.__array_size_max = array_size_max
             self.__flags = flags | PropertyFlags.NONE     # NONE != 0!
 
-            if self.__min_array or self.__max_array:
-                raise toolkit.PylonApiError(
-                    toolkit.PylonApiError.NOT_IMPLEMENTED,
-                    "property arrays are not (yet) supported"
-                )
-
-        min_array = property(
-            lambda self: self.__min_array,
+        array_size_min = property(
+            lambda self: self.__array_size_min,
             None,
             None, """The minimum size of an array implementation..
 
@@ -1841,18 +1853,18 @@ class Profile(Type):
 
             Array boundary requirements are specified as follows:
 
-            min_array == 0 and max_array == 0:
+            array_size_min == 0 and array_size_max == 0:
             Array implementation prohibited
 
-            min_array == N, N>0, max_array == N
+            array_size_min == N, N>0, array_size_max == N
             Array implementation required with size N
 
-            min_array == N, N>=0, max_array == M, M>N:
+            array_size_min == N, N>=0, array_size_max == M, M>N:
             Array implementation permitted, size N..M"""
         )
 
-        max_array = property(
-            lambda self: self.__max_array,
+        array_size_max = property(
+            lambda self: self.__array_size_max,
             None,
             None, """The maximum size of an array implementation.
             Describes the maximum size of an array, if this property is to be
@@ -1860,13 +1872,13 @@ class Profile(Type):
 
             Array boundary requirements are specified as follows:
 
-            min_array == 0 and max_array == 0:
+            array_size_min == 0 and array_size_max == 0:
             Array implementation prohibited
 
-            min_array == N, N>0, max_array == N
+            array_size_min == N, N>0, array_size_max == N
             Array implementation required with size N
 
-            min_array == N, N>=0, max_array == M, M>N:
+            array_size_min == N, N>=0, array_size_max == M, M>N:
             Array implementation permitted, size N..M"""
         )
 
@@ -1956,17 +1968,20 @@ class Profile(Type):
             affecting the interoperable interface changes.
             """
             signature = super()._signature() + \
-                self.__min_array << 11 + \
-                self.__max_array << 19 + \
-                self.__flags << 26
+                (self.__array_size_min << 11) + \
+                (self.__array_size_max << 19) + \
+                (self.__flags << 26)
             return signature
 
         def __str__(self):
             array = ''
-            if self.__min_array and self.__min_array == self.__max_array:
-                array = '[{0}]'.format(self.__min_array)
-            elif self.__min_array < self.__max_array:
-                array = '[{0]..{1}]'.format(self.__min_array, self.__max_array)
+            if self.__array_size_min and \
+                    self.__array_size_min == self.__array_size_max:
+                array = '[{0}]'.format(self.__array_size_min)
+            elif self.__array_size_min < self.__array_size_max:
+                array = '[{0]..{1}]'.format(
+                    self.__array_size_min, self.__array_size_max
+                )
 
             return '{0}{1}'.format(
                 super().__str__(),
