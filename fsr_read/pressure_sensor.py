@@ -1,5 +1,5 @@
-""" Reads the resistor with RC timing reading for Raspberry Pi
-Requires GPIO 0.3.1a or later
+""" Reads the resistor with RC timing _reading for Raspberry Pi
+    Requires GPIO 0.3.1a or later
 """
 
 #
@@ -14,73 +14,68 @@ import time
 import RPi.GPIO as GPIO
 import sys
 
-NO_PRESSURE = 10000             # count value for zero pressure
-TEST_PIN = 0            # pin to read from to check if I can indeed read
+NO_PRESSURE = 10000     # count value for zero pressure
+DEFAULT_PIN = 18        # default pin to read from
 
-class PRESSURE_SENSOR:
+class PressureSensor:
 
-    _debug = False
-    reading = 0
-
-    def __init__(self, debug=False):
+    def __init__(self, pin=DEFAULT_PIN, debug=False):
+        self._pin = pin
         self._debug = debug
         GPIO.setmode(GPIO.BCM)
-        # try reading from hw to generate exception on object creation
-        #GPIO.setup(pin, GPIO.OUT)
-        #GPIO.output(pin, GPIO.LOW)
-        #time.sleep(0.1)
-
-       #GPIO.output(TEST_PIN, GPIO.LOW)
-        # don't catch exception here, let it go to the caller
 
     def test_sensor_ok(self):
         """Do hardware check to see if we can read the sensor
         """
         try:
-            GPIO.output(TEST_PIN, GPIO.LOW)
+            GPIO.output(self._pin, GPIO.LOW)
             return True
         except Exception:
-            print("Cannot read hardware I/O (not running as root?)")
+            print('Cannot read hardware I/O (not running as root?)')
             return False
 
-    def read_pressure(self, pin):
+    def read_pressure(self):
         """Reads pressure sensor by RC timing
         """
         try:
             # reset the count
-            self.reading = 0
+            self._reading = 0
             # empty the capacitor
-            GPIO.setup(pin, GPIO.OUT)
-            GPIO.output(pin, GPIO.LOW)
+            GPIO.setup(self._pin, GPIO.OUT)
+            GPIO.output(self._pin, GPIO.LOW)
             time.sleep(0.01)
 
             # prepare to read
-            GPIO.setup(pin, GPIO.IN)
+            GPIO.setup(self._pin, GPIO.IN)
 
-            # Keep counting until the capacitor fills above a certain level and brings the input high
+            # Keep counting until the capacitor fills above a certain level and 
+            # brings the input high 
             #
             # Low pressure = high count
             # High pressure = low count
             #
             # This takes about 1 millisecond per loop cycle
-            while (GPIO.input(pin) == GPIO.LOW):
-                    self.reading += 1
+            while (GPIO.input(self._pin) == GPIO.LOW):
+                    self._reading += 1
                     # count until we determine there is just no pressure
-                    if self.reading >= NO_PRESSURE:
+                    if self._reading >= NO_PRESSURE:
                         break
 
             if self._debug:
                 # go to beginning of line, print the prompt
-                sys.stdout.write("\rPressure is: {:<11}".format(
-                    str(self.reading) if self.reading < NO_PRESSURE else "no pressure"))
+                sys.stdout.write('\rSensor pin {0} pressure is: {1:<11}'.format(
+                    self._pin,
+                    str(self._reading) if self._reading < NO_PRESSURE 
+                                      else "no pressure"))
                 # stay on this line
                 sys.stdout.flush()
 
-            return self.reading
+            return self._reading
 
         except Exception:
             if self._debug:
-                print("Cannot read hardware I/O (not running as root?)")
+                print('Cannot read sensor on pin {0} '
+                      '(not running as root?)'.format(self._pin))
             return NO_PRESSURE
 
     def cleanup(self):
