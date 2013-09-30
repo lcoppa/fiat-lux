@@ -43,7 +43,6 @@ from pylon.resources.SFPTclosedLoopSensor import SFPTclosedLoopSensor
 
 # I/O drivers
 from pylon.examples.common.led_driver.led_set import LedStrip
-# Act on input
 from pylon.examples.common.fsr_driver.pressure_sensor import PressureSensor
 
 # Constants
@@ -53,21 +52,21 @@ PRESSURE_DIMMING_THRESHOLD = 1000       # Pressure reading below which we cycle
                                         # LED brightness
 PRESSURE_VALUE_DELTA = 50               # pressure send on delta
 
-PWM_BOARD_I2C_ADDRESS = 0x40        # Used by the LED object
-PWM_FREQ = 1000                     # In Hz, used by the LED object
-RED_LED_PWM_CHANNEL = 0             # Used by the LED object
-GREEN_LED_PWM_CHANNEL = 1           # Used by the LED object
-BLUE_LED_PWM_CHANNEL = 2            # Used by the LED object
-LED_OFFSET = 3                      # Used by the LED object
-MAX_LEDs = 4                        # Number of hw LEDs supported
+PWM_BOARD_I2C_ADDRESS = 0x40            # Used by the LED object
+PWM_FREQ = 1000                         # In Hz, used by the LED object
+RED_LED_PWM_CHANNEL = 0                 # Used by the LED object
+GREEN_LED_PWM_CHANNEL = 1               # Used by the LED object
+BLUE_LED_PWM_CHANNEL = 2                # Used by the LED object
+LED_OFFSET = 3                          # Used by the LED object
+MAX_LEDs = 4                            # Number of hw LEDs supported
 
-MIN_BRIGHTNESS_LEVEL = 0            # used in HLS color space
-MAX_BRIGHTNESS_LEVEL = 255          # used in HLS color space
-DIMMABLE_LED_INDEX = 0              # let's dim only one LED
-DIMMING_STEP = 3                    # step value when dimming up or down
-HUE = 0                             # index for hue value in HLS tuple
-LUMINANCE = 1                       # index for luminance value in HLS tuple
-SATURATION = 2                      # index for saturation value in HLS tuple
+MIN_BRIGHTNESS_LEVEL = 0                # used in HLS color space
+MAX_BRIGHTNESS_LEVEL = 255              # used in HLS color space
+DIMMABLE_LED_INDEX = 0                  # let's dim only one LED
+DIMMING_STEP = 3                        # step value when dimming up or down
+HUE = 0                                 # index for hue value in HLS tuple
+LUMINANCE = 1                           # index for luminance value in HLS tuple
+SATURATION = 2                          # index for saturation value in HLS tuple
 
 #############################################################################
 # Main function

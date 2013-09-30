@@ -10,7 +10,7 @@
 #
 
 import sys
-from .Adafruit_PWM_Servo_Driver import PWM
+from pylon.examples.common.adafruit.Adafruit_PWM_Servo_Driver import PWM
 
 DEFAULT_ADDRESS = 0x40      # i2c address for the pwm board
 DEFAULT_FREQ = 1000         # in Hz
