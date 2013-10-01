@@ -36,7 +36,6 @@ import threading
 from pylon.device import event
 from pylon.device import toolkit
 from pylon.resources import base
-from pylon.resources.SNVT_obj_status import SNVT_obj_status
 
 
 class Interface(toolkit.PilonObject):
@@ -145,6 +144,20 @@ class Datapoint(Interface):
         self.__index = index		# index, in creation order
         self.__disabled = False
 
+        # When the application object's service routine processes an enqueued
+        # output datapoint object, it submits the datapoint's value to the
+        # protocol stack, and requests propagation of this datapoint. However,
+        # when the service routine finds an input datapoint object in the
+        # to-do queue, it needs to take one of the following actions, or both:
+        # If the script has called the poll() method, it needs to request a
+        # polling transaction with the protocol stack.
+        # If the script has updated the value, it needs to submit the updated
+        # value to the protocol stack.
+        # These two possible actions are managed with the following two
+        # boolean attributes and their corresponding properties.
+        self.__do_poll = False
+        self.__do_sync = False
+
         self.__array_size = 0
         self.__array_index = 0
 
@@ -214,14 +227,15 @@ class Datapoint(Interface):
         """Handle onAssign event."""
         if self._lock(blocking=False):
             # Add this item to the queue of pending things only if it is not
-            # currently locked, and only if it is an output.
+            # currently locked. Also set the do_sync flag for inputs.
             # It is assumed that a locked item is currently within a
             # with-block, which queues the item upon exit. Scripts which make
             # explicit calls to lock must explicitly unlock and propagate as
             # necessary.
             try:
-                if self.is_output:
-                    self.__application.enqueue(self)
+                if not self.is_output:
+                    self.__do_sync = True
+                self.__application.enqueue(self)
             finally:
                 self._unlock()
 
@@ -570,6 +584,26 @@ class Datapoint(Interface):
         None, """The profile member implemented by this object, or None."""
     )
 
+    def __get_do_poll(self):
+        result = self.__do_poll
+        self.__do_poll = False
+        return result
+
+    def __get_do_sync(self):
+        result = self.__do_sync
+        self.__do_sync = False
+        return result
+
+    _do_poll = property(
+        __get_do_poll,
+        None, None, """Return and clear the do_poll flag."""
+    )
+
+    _do_sync = property(
+        __get_do_sync,
+        None, None, """Return and clear the do_sync flag."""
+    )
+
     #
     #	Methods:
     #
@@ -699,6 +733,7 @@ class Datapoint(Interface):
                 'Can only poll inputs'
             )
         self.__application.enqueue(self)
+        self.__do_poll = True
 
     def propagate(self):
         """Trigger propagation of an output datapoint.
@@ -928,7 +963,7 @@ class PropertyDatapoint(Datapoint):
         #
         #   SD ::= &header,select,flags,index,[array_size],[rangemod],[?][;rem]
 
-        sd = '&'    #   &
+        sd = '&'    # &
 
         #   &header,select
         if not self.__applies_to:
@@ -954,9 +989,11 @@ class PropertyDatapoint(Datapoint):
             data_item._property_key
         )
 
-        if self.array_size:
-            #   ,[array_size],[range_mod],[?]
-            sd += ',{0}'.format(self.array_size)
+        # Notice that the 'dim' field is _not generated_, even if this property
+        # implements a property array. The LonMark Application Layer Guidelines
+        # version 3.4 are wrong in this respect; the 'dim' field for property
+        # arrays is only required (and, indeed, acceptable) for properties
+        # implemented in property value files.
 
         # ### TODO REMINDER: consider adding range-mod support
         # ### TODO REMINDER: add changeable-type support
@@ -975,19 +1012,19 @@ class Block(Interface):
     """
 
     def __init__(self, application, index, profile, ext_name=None,
-                 snvt_xxx=None):
+                 xxx=None):
         super().__init__()
         self.__application = application
         self.__index = index
         self.__profile = profile
         self.__ext_name = ext_name
-        self.__snvt_xxx = snvt_xxx
+        self.__datapoint_xxx = xxx
 
         self.__datapoints = []          # all datapoint members implemented
         self.__properties = []          # all properties applying to this block
         self.__principal = None
 
-        self.status = SNVT_obj_status(object_id=index)
+        self.status = base.obj_status(object_id=index)
 
         self.__array_index = 0
         self.__array_size = 0
@@ -1212,7 +1249,7 @@ class Block(Interface):
                 member=member,
                 block=self,
                 array_desc=array_guide,
-                snvt_xxx=self.__snvt_xxx
+                xxx=self.__datapoint_xxx
             )
         elif isinstance(member, base.Profile.PropertyMember):
             dp = self.__application._implement_block_property(

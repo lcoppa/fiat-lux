@@ -140,6 +140,7 @@ class StackError(toolkit.Enum):
 
     def __init__(self, value=0):
         super(StackError, self).__init__(StackError.__errors, value)
+        self.default = 0
 
 
 PROGRAM_ID_TYPE = ctypes.c_ubyte * PROGRAM_ID_LENGTH
@@ -1273,7 +1274,7 @@ class Stack(toolkit.PilonObject):
             # Something broke! Probably a code not recognized by StackError():
             raise toolkit.PylonError(
                 code,
-                'An unknown error occurred, code {0} ({1})'.format(
+                'An error occurred, code {0} ({1})'.format(
                     code,
                     e
                 )

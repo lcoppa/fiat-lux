@@ -33,6 +33,7 @@ import logging
 import struct
 
 from pylon.device import toolkit
+#from pylon.resources import standard
 
 logger = logging.getLogger('pylon-rtk.drf')
 
@@ -61,6 +62,7 @@ class Type(toolkit.PilonObject):
         self.__key = int(key)
         self.__scope = int(scope)
         self.__obsolete = False
+        self.__original_name = None
 
     _key = property(
         lambda self: self.__key,
@@ -94,6 +96,32 @@ class Type(toolkit.PilonObject):
         Indicates whether the type is marked as obsolete.
         Obsolete definitions may be used with existing design, but their use in
         new development is not recommended."""
+    )
+
+    def __set_original_name(self, v):
+        if isinstance(v, str):
+            self.__original_name = v
+        else:
+            raise TypeError(
+                'Expected string, got {0}'.format(
+                    type(v)
+                )
+            )
+
+    _original_name = property(
+        lambda self: self.__original_name,
+        __set_original_name,
+        None, """Gives the resource's original name, if available.
+
+        Many of the pylon resources (datapoint types, property types, profiles
+        and enumerations) originate from definitions in device resource files,
+        where the resources carry a slightly different name. While the names of
+        the pylon resources are derived from their original definition,
+        resource names have been mangled to avoid conflicts with Python
+        reserved words and built-ins, and have been stripped of name prefixes
+        not necessary when used with Python.
+        This property supplies the original resource name, or None if none is
+        known."""
     )
 
     def _mark_obsolete(self):
@@ -2072,3 +2100,486 @@ class Profile(Type):
 
     def __repr__(self):
         return '<{0}>'.format(self.__str__())
+
+
+class xxx(DataType):
+    """xxx is a placeholder type.
+
+    The xxx class does not implement an actual datapoint type. It is sometimes
+    used in profile definitions to indicate that a member may use any
+    datapoint type in the implementation, The xxx class is known in
+    device resource files as "SNVT_xxx."
+
+    For example, the openLoopSensor profile defines a simple and generic
+    sensor, using xxx for the sensor's output. The profile definition is
+    thus useful for a variety of sensor data, such as temperature, velocity or
+    torque measurements.
+
+    This xxx class provides a valid datapoint type which cannot be
+    instantiated."""
+
+    def __init__(self):
+        super().__init__()
+        raise toolkit.PylonInterfaceError(
+            toolkit.PylonInterfaceError.XXX,
+            'Datapoint placeholder type xxx cannot be implemented'
+        )
+
+    def _signature(self):
+        """Return a 32-bit signature for this item.
+
+        xxx reports a constant signature. This contributes to the
+        calculation of a profile's signature, but does not affect the
+        block's and the overall application signature.
+        """
+        return 0x78787878
+
+    def __str__(self):
+        return 'xxx'
+
+
+class obj_status(Structure):
+    """obj_status standard datapoint type.
+
+    This datapoint type, known in device resource files as SNVT_obj_status,
+    plays a special role within the pylon framework, because the Application
+    class' implementation of the node object profile depends on this type and
+    its implementation. This standard datapoint type is, therefore, given extra
+    protection by providing it within the pylon.resources.base module.
+
+    Object status (ID, status flags).
+
+    Used to indicate the status of the various objects within a node. For more
+    details, see the definition of the Node Object (nodeObject profile).
+
+    Addition found in version 3.3 and later:
+
+    The reset_complete field, indicates the execution of the Reset sequence of
+    any object (object_id) within the device. After a Reset sequence, the
+    reset_complete flag goes to TRUE (1) and it remains ‘1’ until it is cleared
+    (acknowledged) via obj_request (nviRequest in the Node Object) on in
+    the corresponding Object (object_id ).
+
+    Note:The additional reset flag uses reserved1 of the previous obj_status
+    structure definition.
+    """
+
+    def __init__(self, object_id=0, flags=0):
+        """
+        Creates obj_status.
+        """
+        super().__init__(
+            key=93,
+            scope=0
+        )
+
+        # For this type, we set the _definition to None because we'd create a
+        # circular dependency otherwise. That's OK, because pylon always treats
+        # this datapoint type special.
+        self._definition = None
+
+        self.__object_id = Scaled(
+            size=2,
+            signed=False,
+            default=object_id
+        )
+        self._register(('object_id', self.__object_id))
+
+        self.__flags = Scaled(
+            size=4,
+            signed=False,
+            default=flags
+        )
+        self._register(('flags', self.__flags))
+        self._original_name = 'SNVT_obj_status'
+
+    def __set_object_id(self, v):
+        self.__object_id._value = v
+
+    object_id = property(
+        lambda self: self.__object_id._value,
+        __set_object_id,
+        None, """
+        Object ID (object index).
+        """
+    )
+
+    def __set(self, v):
+        if not isinstance(v, obj_status):
+            raise TypeError('Expected instance of obj_status, '
+                            'got {0}'.format(
+                                type(v)
+                            ))
+
+        self.__object_id._value = v.__set_object_id
+        self.__flags._value = v.__flags
+
+    _value = property(lambda self: self, __set)
+
+    def __len__(self):
+        """Returns the length of the data type, in bytes."""
+        # No need to compute at runtime, as the size is fixed.
+        return 6
+
+    def __ior__(self, other):
+        """Supports combining multiple obj_status objects into one.
+        This is used to report the OR'ed status flags of multiple blocks.
+        """
+        if not isinstance(other, obj_status):
+            raise TypeError('Can only combine obj_status objects')
+        self.__object_id_value = 0
+        self.__flags._value |= other.__flags._value
+        return self
+
+    def __set_flags(self, v):
+        self.__flags._value = v
+        self._assigned(self)
+
+    _flags = property(
+        lambda self: self.__flags,
+        __set_flags,
+        None, """
+        Use the _flags property to access all flags through the 32-bit
+        bitvector rather than through the individual flag properties supplied
+        with this class.
+        You should prefer using the individual flag properties to keep your
+        code readable, but you should consider using this property where code
+        readability is not a concern, and speed or simplicity is.
+        For example, to clear all flags, assign 0 (zero) to this property.
+        """
+    )
+
+    def __set_invalid_id(self, v):
+        if v:
+            self.__flags._value |= 0x80000000
+        else:
+            self.__flags._value &= ~0x80000000
+
+    invalid_id = property(
+        lambda self: self.__flags._value & 0x80000000,
+        __set_invalid_id,
+        None, """
+        Invalid-ID flag.
+        """
+    )
+
+    def __set_invalid_request(self, v):
+        if v:
+            self.__flags._value |= 0x40000000
+        else:
+            self.__flags._value &= ~0x40000000
+
+    invalid_request = property(
+        lambda self: self.__flags._value & 0x40000000,
+        __set_invalid_request,
+        None, """
+        Invalid-request flag.
+        """
+    )
+
+    def __set_disabled(self, v):
+        if v:
+            self.__flags._value |= 0x20000000
+        else:
+            self.__flags._value &= ~0x20000000
+
+    disabled = property(
+        lambda self: self.__flags._value & 0x20000000,
+        __set_disabled,
+        None, """
+        Disabled flag.
+        """
+    )
+
+    def __set_out_of_limits(self, v):
+        if v:
+            self.__flags._value |= 0x10000000
+        else:
+            self.__flags._value &= ~0x10000000
+
+    out_of_limits = property(
+        lambda self: self.__flags._value & 0x10000000,
+        __set_out_of_limits,
+        None, """
+        Out-of-limits flag.
+        """
+    )
+
+    def __set_open_circuit(self, v):
+        if v:
+            self.__flags._value |= 0x08000000
+        else:
+            self.__flags._value &= ~0x08000000
+
+    open_circuit = property(
+        lambda self: self.__flags._value & 0x08000000,
+        __set_open_circuit,
+        None, """
+        Open-circuit flag.
+        """
+    )
+
+    def __set_out_of_service(self, v):
+        if v:
+            self.__flags._value |= 0x04000000
+        else:
+            self.__flags._value &= ~0x04000000
+
+    out_of_service = property(
+        lambda self: self.__flags._value & 0x04000000,
+        __set_out_of_service,
+        None, """
+        Out-of-service flag.
+        """
+    )
+
+    def __set_mechanical_fault(self, v):
+        if v:
+            self.__flags._value |= 0x02000000
+        else:
+            self.__flags._value &= ~0x02000000
+
+    mechanical_fault = property(
+        lambda self: self.__flags._value & 0x02000000,
+        __set_mechanical_fault,
+        None, """
+        Mechanical-fault flag.
+        """
+    )
+
+    def __set_feedback_failure(self, v):
+        if v:
+            self.__flags._value |= 0x01000000
+        else:
+            self.__flags._value &= ~0x01000000
+
+    feedback_failure = property(
+        lambda self: self.__flags._value & 0x01000000,
+        __set_feedback_failure,
+        None, """
+        """
+    )
+
+    def __set_over_range(self, v):
+        if v:
+            self.__flags._value |= 0x00800000
+        else:
+            self.__flags._value &= ~0x00800000
+
+    over_range = property(
+        lambda self: self.__flags._value & 0x00800000,
+        __set_over_range,
+        None, """
+        Over-range flag.
+        """
+    )
+
+    def __set_under_range(self, v):
+        if v:
+            self.__flags._value |= 0x00400000
+        else:
+            self.__flags._value &= ~0x00400000
+
+    under_range = property(
+        lambda self: self.__flags._value & 0x00400000,
+        __set_under_range,
+        None, """
+        Under-range flag.
+        """
+    )
+
+    def __set_electrical_fault(self, v):
+        if v:
+            self.__flags._value |= 0x00200000
+        else:
+            self.__flags._value &= ~0x00200000
+
+    electrical_fault = property(
+        lambda self: self.__flags._value & 0x00200000,
+        __set_electrical_fault,
+        None, """
+        Electrical-fault flag.
+        """
+    )
+
+    def __set_unable_to_measure(self, v):
+        if v:
+            self.__flags._value |= 0x00100000
+        else:
+            self.__flags._value &= ~0x00100000
+
+    unable_to_measure = property(
+        lambda self: self.__flags._value & 0x00100000,
+        __set_unable_to_measure,
+        None, """
+        Unable-to-measure flag.
+        """
+    )
+
+    def __set_comm_failure(self, v):
+        if v:
+            self.__flags._value |= 0x00080000
+        else:
+            self.__flags._value &= ~0x00080000
+
+    comm_failure = property(
+        lambda self: self.__flags._value & 0x00080000,
+        __set_comm_failure,
+        None, """
+        Communications-failure flag.
+        """
+    )
+
+    def __set_fail_self_test(self, v):
+        if v:
+            self.__flags._value |= 0x00040000
+        else:
+            self.__flags._value &= ~0x00040000
+
+    fail_self_test = property(
+        lambda self: self.__flags._value & 0x00040000,
+        __set_fail_self_test,
+        None, """
+        Failed-self-test flag.
+        """
+    )
+
+    def __set_self_test_in_progress(self, v):
+        if v:
+            self.__flags._value |= 0x00020000
+        else:
+            self.__flags._value &= ~0x00020000
+
+    self_test_in_progress = property(
+        lambda self: self.__flags._value & 0x00020000,
+        __set_self_test_in_progress,
+        None, """
+        Self-test-in-progress flag.
+        """
+    )
+
+    def __set_locked_out(self, v):
+        if v:
+            self.__flags._value |= 0x00010000
+        else:
+            self.__flags._value &= ~0x00010000
+
+    locked_out = property(
+        lambda self: self.__flags._value & 0x00010000,
+        __set_locked_out,
+        None, """
+        Locked-out flag.
+        """
+    )
+
+    def __set_manual_control(self, v):
+        if v:
+            self.__flags._value |= 0x00008000
+        else:
+            self.__flags._value &= ~0x00008000
+
+    manual_control = property(
+        lambda self: self.__flags._value & 0x00008000,
+        __set_manual_control,
+        None, """
+        Manual-control flag.
+        """
+    )
+
+    def __set_in_alarm(self, v):
+        if v:
+            self.__flags._value |= 0x00004000
+        else:
+            self.__flags._value &= ~0x00004000
+
+    in_alarm = property(
+        lambda self: self.__flags._value & 0x00004000,
+        __set_in_alarm,
+        None, """
+        Input-alarm flag.
+        """
+    )
+
+    def __set_in_override(self, v):
+        if v:
+            self.__flags._value |= 0x00002000
+        else:
+            self.__flags._value &= ~0x00002000
+
+    in_override = property(
+        lambda self: self.__flags._value & 0x00002000,
+        __set_in_override,
+        None, """
+        Input-override flag.
+        """
+    )
+
+    def __set_report_mask(self, v):
+        if v:
+            self.__flags._value |= 0x00001000
+        else:
+            self.__flags._value &= ~0x00001000
+
+    report_mask = property(
+        lambda self: self.__flags._value & 0x00001000,
+        __set_report_mask,
+        None, """
+        Report-mask flag.
+        """
+    )
+
+    def __set_programming_mode(self, v):
+        if v:
+            self.__flags._value |= 0x00000800
+        else:
+            self.__flags._value &= ~0x00000800
+
+    programming_mode = property(
+        lambda self: self.__flags._value & 0x00000800,
+        __set_programming_mode,
+        None, """
+        Programming-mode flag.
+        """
+    )
+
+    def __set_programming_fail(self, v):
+        if v:
+            self.__flags._value |= 0x00000400
+        else:
+            self.__flags._value &= ~0x00000400
+
+    programming_fail = property(
+        lambda self: self.__flags._value & 0x00000400,
+        __set_programming_fail,
+        None, """
+        Programming-fail flag.
+        """
+    )
+
+    def __set_alarm_notify_disabled(self, v):
+        if v:
+            self.__flags._value |= 0x00000200
+        else:
+            self.__flags._value &= ~0x00000200
+
+    alarm_notify_disabled = property(
+        lambda self: self.__flags._value & 0x00000200,
+        __set_alarm_notify_disabled,
+        None, """
+        Alarm-notify-disabled flag.
+        """
+    )
+
+    def __set_reset_complete(self, v):
+        if v:
+            self.__flags._value |= 0x00000100
+        else:
+            self.__flags._value &= ~0x00000100
+
+    reset_complete = property(
+        lambda self: self.__flags._value & 0x00000100,
+        __set_reset_complete,
+        None, """
+        Reset flag.
+        """
+    )

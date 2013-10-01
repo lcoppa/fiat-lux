@@ -277,12 +277,27 @@ class Enrollment(toolkit.PilonObject):
                  acknowledged=False,
                  poll=False,
                  scope=IsiScope.STANDARD,
-                 application=bytes(APPLICATION_ID_LEN),
+                 application=None,
                  member=0,
                  raw=None):
         """Construct an Enrollment object.
 
         Constructs the object from raw bytes, or from distinct values.
+
+        Arguments:
+
+        group       the group number to enroll. Use DEFAULT_GROUP when in doubt
+        direction   a value from the IsiDirection enumeration
+        width       the width of the enrollment (an integer number > 0)
+        profile     a valid profile number or a profile object
+        type_id     a Datapoint object, a DataType object, or an integer
+        variant     an integer variant number
+        acknowledged boolean
+        poll        boolean
+        scope       a value from IsiScope
+        application the application's program Id as a bytes object or string
+        member      the member number or a profile member object
+        raw         raw enrollment data as a bytes object
 
         Construction from an raw iterable of bytes is typically used
         internally when creating an Enrollment object from an incoming
@@ -323,6 +338,7 @@ class Enrollment(toolkit.PilonObject):
             logger.debug('Received {0}'.format(repr(self)))
         else:
             self.__created_from_raw = False
+
             self.group = group
             self.direction = direction
             self.width = width
@@ -444,7 +460,12 @@ class Enrollment(toolkit.PilonObject):
             raise AttributeError(
                 'This Enrollment object is read-only'
             )
-        self.__profile = self._in_range('Profile', v, 0, 65535)
+        if not v:
+            self.__profile = 0
+        elif isinstance(v, base.Profile):
+            self.__profile = v._key
+        else:
+            self.__profile = self._in_range('Profile', v, 0, 65535)
 
     profile = property(
         lambda self: self.__profile,
@@ -452,7 +473,8 @@ class Enrollment(toolkit.PilonObject):
         None, """Profile number or zero for any.
 
         Key number of the profile containing the primary datapoint, or zero
-        if not specified.
+        if not specified. The property also accepts a Profile object when
+        assigned, but only maintains and returns the profile number.
     """)
 
     def __set_type_id(self, v):
@@ -461,10 +483,11 @@ class Enrollment(toolkit.PilonObject):
                 'This Enrollment object is read-only'
             )
         if isinstance(v, interface.Datapoint):
-            v = v.get_data_item()._key
+            self.__type_id = v.get_data_item()._key
         elif isinstance(v, base.DataType):
-            v = v._key
-        self.__type_id = self._in_range('Datapoint type id', v, 0, 255)
+            self.__type_id = v._key
+        else:
+            self.__type_id = self._in_range('Datapoint type id', v, 0, 255)
 
     type_id = property(
         lambda self: self.__type_id,
@@ -472,7 +495,9 @@ class Enrollment(toolkit.PilonObject):
         None, """Primary datapoint type ID or zero for any.
 
         The primary datapoint's type key, or zero if not specified.
-        You may also assign a datapoint object to this property.
+        You may also assign a datapoint object to this property. The property
+        also accepts a Datapoint or DataType object when assigned, but only
+        maintains and returns the numeric type identifier.
     """)
 
     def __set_variant(self, v):
@@ -563,7 +588,9 @@ class Enrollment(toolkit.PilonObject):
             raise AttributeError(
                 'This Enrollment object is read-only'
             )
-        if isinstance(v, bytes) or isinstance(v, bytearray):
+        if not v:
+            self.__application = bytes(APPLICATION_ID_LEN)
+        elif isinstance(v, bytes) or isinstance(v, bytearray):
             if len(v) != APPLICATION_ID_LEN:
                 raise AttributeError(
                     'Expected {0} bytes, got {1}'.format(
@@ -572,11 +599,13 @@ class Enrollment(toolkit.PilonObject):
                     )
                 )
             self.__application = v
-        elif isinstance(v, str) and v == '*':
-            # resolve this later
-            self.__application = v
+        elif isinstance(v, str):
+            self.__application = self._binary(v, (6, 8), ':')[:6]
         else:
-            self.__application = self._binary(v, (APPLICATION_ID_LEN, ), ':')
+            raise TypeError(
+                'Application data is not acceptable. '
+                'See the Enrollment.application property for details.'
+            )
 
     application = property(
         lambda self: self.__application,
@@ -587,10 +616,19 @@ class Enrollment(toolkit.PilonObject):
         standard program ID bytes (channel type and model number) are not
         included here. All bytes are zero for 'don't care.'
 
-        The property accepts bytes or bytearray objects, or ASCII-encoded
-        strings in the '9F:FF:FF:12:34:56' form. Hosting devices may also
-        specify "*", which is interpreted as the first 6 bytes of the
-        running application's standard program ID.
+        The property accepts values in several forms:
+
+        None
+        Indicates that no specific application identifier is set. Within the
+        enrollment message, this yields an all-zero application identifier.
+
+        b'ABCDEF'
+        A bytes or bytearray objects containing exactly 6 bytes.
+
+        '9F:FF:FF:12:34:56'
+        A string containing 6 or 8 two-digit ascii-encoded numbers, separated
+        with a colon. If 8 bytes are provided, the last two bytes are ignored.
+        This allows assignment of a standard program ID.
     """)
 
     def __set_member(self, v):
@@ -598,7 +636,23 @@ class Enrollment(toolkit.PilonObject):
             raise AttributeError(
                 'This Enrollment object is read-only'
             )
-        self.__member = self._in_range('Member', v, 0, 255)
+        if not v:
+            self.__member = 0
+        if isinstance(v, interface.Datapoint):
+            if not v.member:
+                raise ValueError(
+                    'This datapoint is not a member of a profile: {0}'.format(
+                        v
+                    )
+                )
+            v = v.member
+
+        if isinstance(v, base.Profile.PropertyMember):
+            self.__member = v.number
+        elif isinstance(v, base.Profile.DatapointMember):
+            self.__member = v.number
+        else:
+            self.__member = self._in_range('Member', v, 0, 255)
 
     member = property(
         lambda self: self.__member,
@@ -606,6 +660,12 @@ class Enrollment(toolkit.PilonObject):
         None, """Member number.
 
         Datapoint member number with the profile, or zero if not specified.
+        The property also accepts a Profile.DatapointMember or
+        Profile.PropertyMember object on assignment, but only maintains and
+        returns the member number.
+        The property also accepts a Datapoint or PropertyDatapoint object on
+        assignment, provided that this object implements a member of a profile,
+        but only maintains and returns the member number.
     """)
 
 
@@ -707,7 +767,7 @@ class Assembly(toolkit.PilonObject):
             self.__assembly = ((check_index(description), ), )
         else:
             outer = []
-            if not outer:
+            if not description:
                 raise TypeError(
                     'An assembly cannot be empty'
                 )
@@ -716,7 +776,7 @@ class Assembly(toolkit.PilonObject):
                     outer.append((check_index(member), ))
                 else:
                     inner = []
-                    if not inner:
+                    if not member:
                         raise TypeError(
                             'An assembly member list cannot be empty'
                         )
@@ -2107,6 +2167,24 @@ class ISI(toolkit.PilonObject):
         api.restype = ctypes.c_int
         return api()
 
+    def is_automatically_enrolled(self, assembly):
+        """Determine whether the assembly is member of an auto. enrollment.
+
+        The method accepts an Assembly object or an assembly number.
+
+        Return a true value if the given assembly is currently member of an
+        automatically enrolled connection.
+        This function operates in all states of the ISI engine.
+        """
+        assembly = self.__validate_assembly(assembly)
+
+        api = self.__engine.IsiIsAutomaticallyEnrolled
+        api.argtypes = [
+            ctypes.c_uint
+        ]
+        api.restype = ctypes.c_int
+        return api(assembly)
+
     @threaded
     def send_drum(self):
         """Issue an out-of-schedule ISI DRUM message.
@@ -2149,7 +2227,7 @@ class ISI(toolkit.PilonObject):
         logger.debug('initiate_auto_enrollment({0}) starting'.format(assembly))
 
         assembly = self.__validate_assembly(assembly)
-        enrollment = Assembly.assemblies[assembly]
+        enrollment = Assembly.assemblies[assembly].enrollment
 
         if not enrollment:
             raise IsiError(

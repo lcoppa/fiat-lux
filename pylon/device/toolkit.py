@@ -111,7 +111,7 @@ class PylonInterfaceError(PylonError):
 
     NAME_TOO_LONG = 2008    # The given name exceeds the maximum length
     EMPTY_UNION = 2009      # A union must have at least one member
-    SNVT_XXX = 2011         # SNVT_xxx cannot be implemented
+    XXX = 2011              # xxx placeholder type cannot be implemented
     ALREADY_IMPLEMENTED = 2012    # This item can only be implemented once
     NODE_SD_TOO_BIG = 2013    # node SD exceeds 1024 characters - illegal
     DUPLICATE_PROPERTY_TYPE = 2014      # property type must be unique in scope
@@ -258,6 +258,20 @@ class Enum:
         When written, the property accepts both numeric and alphanumeric
         values.
     """)
+
+    def __set_default(self, value):
+        if value in self.__map:
+            self.__default = value
+        else:
+            raise ValueError(
+                'Not a registered member of this enum: {0}'.format(value)
+            )
+
+    default = property(
+        lambda self: self.__default,
+        __set_default,
+        None, """Current default value."""
+    )
 
     is_default = property(
         lambda self: self.__value == self.__default,

@@ -26,14 +26,14 @@ resource file (DRF)."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 12-Sep-2013 11:24.
+# Generated at 19-Sep-2013 16:20.
 
-from pylon.resources import base
+import pylon.resources.base
 
-userdefined = base.Drf(
+userdefined = pylon.resources.base.Drf(
     program_id='90:00:00:05:00:00:00:00',
     scope=1,
-    name='c:\source\pylon\dev\drf\iot.enu',
+    name='iot',
     version=(1, 0),
     doc="""This file is a scope 1 type file.  It contains user network
     variable types, configuration property types, and the enumeration types

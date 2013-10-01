@@ -11,10 +11,10 @@ Then specify additional attributes such as the unique ID, and properties of
 the physical media and logical channel, and create interoperable constructs
 from the application's factory methods, e.g.
 
-import pylon.resources.SNVT_count
+import pylon.resources.datapoints.count
 
 nviCount = app.InputDataPoint(
-   pylon.resources.SNVT_count.SNVT_count, 'nviCount'
+   pylon.resources.datapoints.count.count, 'nviCount'
 )
 
 Attach event handlers as necessary and start the application:

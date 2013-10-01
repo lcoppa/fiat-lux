@@ -49,13 +49,18 @@ import pylon.device.system
 import pylon.device.isi
 from pylon.resources import base
 
-from pylon.resources.SNVT_xxx import SNVT_xxx
-from pylon.resources.SFPTnodeObject import SFPTnodeObject
-from pylon.resources.object_request_t import object_request_t
-from pylon.resources.SCPTnwrkCnfg import SCPTnwrkCnfg
-from pylon.resources.config_source_t import config_source_t
+from pylon.resources.base import xxx as datapoint_xxx
+from pylon.resources.profiles.nodeObject \
+    import nodeObject as profile_nodeObject
+from pylon.resources.enumerations.object_request_t \
+    import object_request_t as enum_object_request
+from pylon.resources.properties.nwrkCnfg \
+    import nwrkCnfg as property_nwrkCnfg
+from pylon.resources.enumerations.config_source_t \
+    import config_source_t as enum_config_source
 
 logger = logging.getLogger('pylon-rtk')
+
 
 def threaded(function):
     """A decorator to produce thread-safe API.
@@ -399,10 +404,10 @@ class Application:
 
         Example:
 
-        from pylon.resources.SNVT_count import SNVT_count
+        from pylon.resources.datapoint.count import count
 
         my_value_input = my_app.input_datapoint(
-           data=SNVT_count(),
+           data=count(),
            name='nviValue'
         )
 
@@ -496,7 +501,7 @@ class Application:
         # The list of implemented blocks and a reference to the node object
         self.__blocks = []
         self.__node_object = None
-        self.__node_object_profile = SFPTnodeObject
+        self.__node_object_profile = profile_nodeObject
 
         # When implementing a block, the factory method may need to create
         # external names for implementations of profile members. It does so
@@ -744,9 +749,9 @@ class Application:
 
         if use_isi:
             # Support ISI in principle. Whether ISI will be started is decided
-            # later, based on the value of the SCPTnwrkConfig property.
+            # later, based on the value of the nwrkConfig property.
             self.__isi = pylon.device.isi.ISI(self._stack, self)
-            self.__scpt_nwrk_cnfg = None
+            self.__property_nwrk_cnfg = None
         else:
             self.__isi = None
 
@@ -810,25 +815,25 @@ class Application:
 
         if self.__isi and not self.__node_object:
             #
-            #   This configuration requires a SCPTnwrkCnfg device property.
+            #   This configuration requires a nwrkCnfg device property.
             #   Make it so:
             #
             for p in self.__properties:
-                if isinstance(p, SCPTnwrkCnfg):
-                    self.__scpt_nwrk_cnfg = p
+                if isinstance(p, property_nwrkCnfg):
+                    self.__property_nwrk_cnfg = p
                     break
-            if not self.__scpt_nwrk_cnfg:
-                self.__scpt_nwrk_cnfg = self.implement(
+            if not self.__property_nwrk_cnfg:
+                self.__property_nwrk_cnfg = self.implement(
                     name='nciNetConfig',
-                    property_type=SCPTnwrkCnfg,
+                    property_type=property_nwrkCnfg,
                     flags=base.PropertyFlags.RESET,
                     expose_name=True
                 )
-                self.__scpt_nwrk_cnfg.data = config_source_t.CFG_LOCAL
-                self.__scpt_nwrk_cnfg.get_data_item()._accept_as_default()
+                self.__property_nwrk_cnfg.data = enum_config_source.CFG_LOCAL
+                self.__property_nwrk_cnfg.get_data_item()._accept_as_default()
                 logger.info(
                     'Implemented device property {0} (for ISI)'.format(
-                        self.__scpt_nwrk_cnfg
+                        self.__property_nwrk_cnfg
                     )
                 )
 
@@ -874,9 +879,12 @@ class Application:
             # before creating the stack, as all profiles, datapoints,
             # properties and their SD must be finalized for this.
             signature = self.__signature(ctd, ifd)
+        else:
+            self.__signature_value = signature
 
         logger.info('Application signature: 0x{0:X}'.format(signature))
         ifd.Signature = signature
+        self.__signature_value = signature
 
         if self.__persistence_path:
             self._stack.set_persistence_path(self.__persistence_path)
@@ -926,8 +934,8 @@ class Application:
         self.__unique_id = self._stack.get_unique_id()
 
         if self.__isi and \
-                self.__scpt_nwrk_cnfg and \
-                self.__scpt_nwrk_cnfg.data == config_source_t.CFG_LOCAL:
+                self.__property_nwrk_cnfg and \
+                self.__property_nwrk_cnfg.data == enum_config_source.CFG_LOCAL:
             self.__isi.start()
 
         self.signal()
@@ -1012,9 +1020,9 @@ class Application:
         3. service() processes any pending datapoints. These are datapoints
         enqueued for processing earlier, either through explicit API such as
         Datapoint.poll() or .propagate(), or implicitly by updating the
-        datapoint's data. Enqueued input datapoints are polled, output
-        datapoints are updated and, unless they are flagged as polled outputs,
-        propagated.
+        datapoint's data. Enqueued input datapoints are polled and/or have
+        their current values submitted to the protocol stack, output datapoints
+        are updated and, unless they are flagged as polled outputs, propagated.
 
         4. service() services the ISI object if ISI is enabled and running.
 
@@ -1107,26 +1115,47 @@ class Application:
                                         )
                                     )
                             else:
-                                # Poll input
-                                try:
-                                    self._stack.poll_dp(dp.index)
-                                    if self.__log_level <= logging.INFO:
-                                        logger.info(
+                                if dp._do_poll:     # Poll input
+                                    # Note the do_poll property automatically
+                                    # clears itself; this flag is True only
+                                    # once.
+                                    try:
+                                        self._stack.poll_dp(dp.index)
+                                        if self.__log_level <= logging.INFO:
+                                            logger.info(
+                                                'Polling datapoint '
+                                                '{0} ({1})'.format(
+                                                    dp.index,
+                                                    dp.name
+                                                )
+                                            )
+                                    except Exception as e:
+                                        logger.error(
                                             'Polling datapoint '
-                                            '{0} ({1})'.format(
+                                            '{0} ({1}): {2}'.format(
                                                 dp.index,
-                                                dp.name
+                                                dp.name,
+                                                e
                                             )
                                         )
-                                except Exception as e:
-                                    logger.error(
-                                        'Polling datapoint '
-                                        '{0} ({1}): {2}'.format(
+                                if dp._do_sync:     # sync the value
+                                    # Note the do_sync property automatically
+                                    # clears itself; this flag is True only
+                                    # once.
+                                    try:
+                                        self._stack._set_dp_value(
                                             dp.index,
-                                            dp.name,
-                                            e
+                                            dp.get_data_item()._pack()
                                         )
-                                    )
+                                    except Exception as e:
+                                        logger.error(
+                                            'Syncing input datapoint '
+                                            '{0} ({1}): {2}'.format(
+                                                dp.index,
+                                                dp.name,
+                                                e
+                                            )
+                                        )
                         dp._unlock()
                     else:
                         # This datapoint is currently locked. This may be OK;
@@ -1363,8 +1392,8 @@ class Application:
             raise ValueError('Expected a value between 0 and 1')
 
     def __set_node_object_profile(self, profile):
-        if not issubclass(profile, SFPTnodeObject):
-            raise TypeError('{0} must derive from SFPTnodeObject'.format(
+        if not issubclass(profile, profile_nodeObject):
+            raise TypeError('{0} must derive from profile_nodeObject'.format(
                 profile
             ))
         if self.__node_object:
@@ -1485,7 +1514,8 @@ class Application:
 
         Defines the profile to be used for implementing the node object.
         This property can only be set before a node object is implemented.
-        The property defaults to SFPTnodeObject."""
+        The property defaults to
+        pylon.resources.profiles.nodeObject.nodeObject."""
     )
 
     bindable_mt = property(
@@ -1595,6 +1625,16 @@ class Application:
         0, but not exceeding 1s."""
     )
 
+    signature = property(
+        lambda self: self.__signature_value,
+        None, None, """Return the application's signature value.
+
+        This read-only property provides the current signature value. The
+        signature is generally automatically calculated. Some applications may
+        find access to this value useful during debugging and troubleshooting.
+        """
+    )
+
     #
     # Callbacks:
     # The application registers the following functions as event handlers
@@ -1622,7 +1662,7 @@ class Application:
             #  Reset returns all blocks to normal
             nviRequest = self.node_object.nviRequest
             nviRequest.data.object_id = 0
-            nviRequest.data.object_request = object_request_t.RQ_NORMAL
+            nviRequest.data.object_request = enum_object_request.RQ_NORMAL
             nviRequest._update(None)
 
     def __onWinkHandler(self):
@@ -1785,7 +1825,7 @@ class Application:
         return normalized
 
     def _implement_block_datapoint(self, member, block, array_desc,
-                                   snvt_xxx=None):
+                                   xxx=None):
         """Implement a member of a block as a datapoint.
 
         This utility is used by the block factory (for mandatory members), and
@@ -1796,15 +1836,15 @@ class Application:
         Return the new datapoint object."""
         datatype = member.datatype
 
-        if issubclass(datatype, SNVT_xxx):
-            if not snvt_xxx:
+        if issubclass(datatype, datapoint_xxx):
+            if not xxx:
                 raise TypeError(
-                    "No SNVT_xxx resolver for {0}".format(
+                    "No datapoint_xxx resolver for {0}".format(
                         member.name
                     )
                 )
             else:
-                datatype = snvt_xxx
+                datatype = xxx
 
         flags = interface.Datapoint.STANDARD
         if member.is_output:
@@ -2035,7 +2075,7 @@ class Application:
 
         Example:
 
-        my_new_property = my_app.implement('nciNwrkCnfg', SCPTnwrkCnfg)
+        my_new_property = my_app.implement('nciNwrkCnfg', nwrkCnfg)
 
         Device properties can not implement type-inheriting property types.
         Each property type can only be applied once.
@@ -2083,7 +2123,7 @@ class Application:
         self.__dict__[name] = dp
         return dp
 
-    def block(self, profile, ext_name=None, snvt_xxx=None, array_desc=0):
+    def block(self, profile, ext_name=None, xxx=None, array_desc=0):
         """Create and return a block.
 
         Use this method to create a block, an instance of a profile.
@@ -2097,15 +2137,15 @@ class Application:
 
         profile     An instance of the profile to implement.
         ext_name    The block's optional external name, or None.
-        snvt_xxx    For profiles which include SNVT_xxx members.
+        xxx         For profiles which include xxx placeholder members.
         array_desc  An optional guide to implement property arrays, see below.
 
         Example:
 
         openLoopSensor = app.block(
-            profile=SFPTopenLoopSensor(),
+            profile=openLoopSensor(),
             ext_name='ols',
-            snvt_xxx=SNVT_temp
+            xxx=temp
         )
 
         The external name, if given and not None, also allows exposure of the
@@ -2113,10 +2153,10 @@ class Application:
         set to None), the block's external name is not exposed, and neither
         are the members' external names.
 
-        The snvt_xxx argument is optional in the general case, but required if
-        the profile specifies any member through the placeholder type SNVT_xxx.
-        This block factory supports only one SNVT_xxx replacement type (as
-        provided with this factory argument), which is applied to all SNVT_xxx
+        The xxx argument is optional in the general case, but required if
+        the profile specifies any member through the placeholder type xxx.
+        This block factory supports only one xxx replacement type (as
+        provided with this factory argument), which is applied to all xxx
         references within the profile (and the inherited profile, if any).
 
         A mandatory member property which requires a specific array size or
@@ -2187,7 +2227,7 @@ class Application:
                 self.__fb_names,
                 ext_name
             ),
-            snvt_xxx=snvt_xxx
+            xxx=xxx
         )
 
         #
@@ -2212,7 +2252,7 @@ class Application:
                     member=member,
                     block=block,
                     array_desc=array_guide,
-                    snvt_xxx=snvt_xxx
+                    xxx=xxx
                 )
 
         #
@@ -2246,14 +2286,14 @@ class Application:
                 self.__blocks[i]._set_index(i)
 
             # If ISI is supported, we need nciNetConfig:
-            if self.__isi and not self.__scpt_nwrk_cnfg:
-                self.__scpt_nwrk_cnfg = block.implement('nciNetConfig')
-                self.__scpt_nwrk_cnfg.data = config_source_t.CFG_LOCAL
-                self.__scpt_nwrk_cnfg.get_data_item()._accept_as_default()
+            if self.__isi and not self.__property_nwrk_cnfg:
+                self.__property_nwrk_cnfg = block.implement('nciNetConfig')
+                self.__property_nwrk_cnfg.data = enum_config_source.CFG_LOCAL
+                self.__property_nwrk_cnfg.get_data_item()._accept_as_default()
 
                 logger.info(
                     'Implemented node object property {0} (for ISI)'.format(
-                        self.__scpt_nwrk_cnfg
+                        self.__property_nwrk_cnfg
                     )
                 )
 
@@ -2368,25 +2408,25 @@ class Application:
             # All blocks except the node object are affected:
             block_list = range(1, len(self.__blocks))
 
-        if request == object_request_t.RQ_NORMAL:
+        if request == enum_object_request.RQ_NORMAL:
             # Return to normal, exit 'disabled' or 'overridden' states:
             for index in block_list:
                 block = self.__blocks[index]
                 block.disabled = False
                 block.status._flags = 0
             nvoStatus.data._flags = 0
-        elif request == object_request_t.RQ_UPDATE_STATUS:
+        elif request == enum_object_request.RQ_UPDATE_STATUS:
             # Report status (OR'ed from all affected blocks)
             update_status(block_list)
-        elif request == object_request_t.RQ_REPORT_MASK:
+        elif request == enum_object_request.RQ_REPORT_MASK:
             # Report capability:
             # invalid_id, invalid_request, report_mask, disable
             nvoStatus.data._flags = 0xE0001000
-        elif request == object_request_t.RQ_DISABLED:
+        elif request == enum_object_request.RQ_DISABLED:
             for index in block_list:
                 self.__blocks[index].is_disabled = True
             update_status(block_list)
-        elif request == object_request_t.RQ_ENABLE:
+        elif request == enum_object_request.RQ_ENABLE:
             for index in block_list:
                 self.__blocks[index].is_disabled = False
             update_status(block_list)

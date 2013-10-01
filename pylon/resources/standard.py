@@ -26,14 +26,14 @@ resource file (DRF)."""
 # the embedded documentation may not be correct, as this data is gathered and
 # combined from several sources.  The machine-generated code may not meet
 # compliance with PEP-8 and PEP-257 recommendations at all times.
-# Generated at 12-Sep-2013 11:27.
+# Generated at 19-Sep-2013 16:20.
 
-from pylon.resources import base
+import pylon.resources.base
 
-standard = base.Drf(
+standard = pylon.resources.base.Drf(
     program_id='00:00:00:00:00:00:00:00',
     scope=0,
-    name='c:\program files (x86)\lonworks\types\standard.enu',
+    name='standard',
     version=(14, 0),
     doc="""This file is the standard type file, containing Standard Network
     Variable Types (SNVTs), Standard Configuration Property Types (SCPTs),
