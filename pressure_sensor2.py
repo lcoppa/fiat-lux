@@ -17,12 +17,30 @@ import sys
 NO_PRESSURE = 10000     # count value for zero pressure
 DEFAULT_PIN = 18        # default pin to read from
 
+
+class GPIODriver:
+
+    # class variable (=static)
+    _initialised = False
+
+    def __init__(self):
+        pass
+
+    def initialise(self):
+        if not _initialised:
+            GPIO.setmode(GPIO.BCM)
+            _initialised = True
+
 class PressureSensor:
 
     def __init__(self, pin=DEFAULT_PIN, debug=False):
         self._pin = pin
         self._debug = debug
-        GPIO.setmode(GPIO.BCM)
+        self._reading = 0
+
+        # initialise GPIO driver
+        driver = GPIODriver()
+        driver.initialise()
 
     def test_sensor_ok(self):
         """Do hardware check to see if we can read the sensor
@@ -55,7 +73,7 @@ class PressureSensor:
             # High pressure = low count
             #
             # This takes about 1 millisecond per loop cycle
-            while (GPIO.input(self._pin) == GPIO.LOW):
+            while GPIO.input(self._pin) == GPIO.LOW:
                     self._reading += 1
                     # count until we determine there is just no pressure
                     if self._reading >= NO_PRESSURE:

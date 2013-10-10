@@ -24,6 +24,8 @@ import select
 import socket
 import sys
 import colorsys
+from collections import namedtuple
+
 # import pdb
 
 # sys.path.append('/usr/local/lib/python3.2/dist-packages')
@@ -45,7 +47,9 @@ import pylon.resources.profiles.closedLoopSensor
 
 # I/O drivers
 from pylon.examples.common.fsr_driver.pressure_sensor import PressureSensor
-from pylon.examples.common.led_driver.pwm_led_set import LedStrip
+from pylon.examples.common.led_driver.pwm_led_set2 import LedStripDriver
+from pylon.examples.common.led_driver.pwm_led_set2 import RGBLed
+
 #from pylon.examples.common.led_driver.piface_led_set import PiFaceLed
 
 # Constants
@@ -85,7 +89,7 @@ RED = 0                                 # Index for red coordinate in RGB tuple
 GREEN = 1                               # Index for green coordinate in RGB tuple
 BLUE = 2                                # Index for blue coordinate in RGB tuple
 RGB_TYPE = ColorEncoding.color_encoding_t.COLOR_RGB
-                                        # RGB color tpye
+                                        # RGB color type
 
 
 
@@ -96,8 +100,11 @@ def main():
     """ The script's main function
     """
 
-    # Create empty led_controller
-    led_controller = 'None'
+    # Define properties for objects
+    pressure_sensors = []
+    Sensor = namedtuple('Sensor', ['sensor', 'block', 'is_enabled'])
+    leds = []
+    Led = namedtuple('Led', ['led', 'block', 'is_enabled'])
 
     # Print startup message
     print('Welcome to the Pilon LED Controller application.')
@@ -135,7 +142,7 @@ def main():
         parser.add_argument(
             '-d', '--device',
             required=True,
-            help='The device URI, e.g. mc://10.0.1.12:1628/ \n' \
+            help='The device URI, e.g. mc://10.0.1.12:1628/ \n'
                  'Required if IP cannot be determined automatically')
     parser.add_argument(
         '-D', '--debug',
@@ -172,9 +179,9 @@ def main():
     parser.add_argument(
         '-s', '--sensor',
         default='single',
-        help='Enable pressure sensor hardware: "none" for no sensors, '
-             '"single" for one sensor for all LEDs, '
-             '"multi" for one sensor per LEDs')
+        help='Enable pressure sensor hardware: "none" for no sensors,'
+             ' "single" for one sensor for all LEDs,'
+             ' "multi" for one sensor per LEDs')
     parser.add_argument(
         '-S', '--standalone',
         default=False,
@@ -195,61 +202,9 @@ def main():
         pydevd.settrace('192.168.60.9', port=5678, stdoutToServer=True, stderrToServer=True)
 
     #
-    # Initialize I/O
-    #
-    # Create the LED controller if the PWM hardware is attached
-    if arguments.color:
-        # Assume the PWM board for the LEDs is at address 0x40 if not
-        # changed in the constants above; check out the tutorial here
-        # learn.adafruit.com/adafruit-16-channel-servo-driver-with-raspberry-pi
-        try:
-            led_controller = LedStrip(PWM_BOARD_I2C_ADDRESS, PWM_FREQ, arguments.debug)
-            # Create flags for detected LED in the strip
-            led_controller.detected_led = []
-            # Detect which LEDs are actually present
-            for i in range(MAX_LEDs):
-                if True: # TODO: actually detect it
-                    led_controller.detected_led.append(True)
-                else:
-                    led_controller.detected_led.append(False)
-        except Exception as e:
-            print('Cannot find the LED light controller.')
-            print(e)
-            # Disable color LED and sensor
-            arguments.color = False
-            arguments.sensor = 'none'
-    elif arguments.piface:
-        try:
-            led_controller = PiFaceLed(arguments.debug)
-        except Exception as e:
-            print('Cannot find the PiFace board')
-            print(e)
-            # Disable PiFace and sensor
-            arguments.piface = False
-            arguments.sensor = 'none'
-
-    # Create the pressure sensor object
-    if arguments.sensor == 'single':
-        try:
-            pressure_sensor = PressureSensor(PRESSURE_SENSOR_PINS[0], arguments.debug)
-        except Exception as e:
-            print('Cannot find the pressure sensor.')
-            print(e)
-            # Disable pressure sensor
-            arguments.sensor = 'none'
-    # One sensor for each RGB LED
-    elif arguments.sensor == 'multi':
-        # Create an array of sensor objects
-        #pressure_sensor = []
-        #for i in range(MAX_PRESSURE_SENSORS):
-        #    pressure_sensor.append(PressureSensor(PRESSURE_SENSOR_PINS[i],
-        #                                             arguments.debug))
-        pressure_sensor = [PressureSensor(PRESSURE_SENSOR_PINS[i], arguments.debug)
-                           for i in range(MAX_PRESSURE_SENSORS)]
-
-    #
     # Initialize the Pilon app
     #
+
     # Enable/disable test mode
     pylon.device.stack.test_mode = arguments.test
 
@@ -261,7 +216,7 @@ def main():
         log_level=logging.DEBUG if arguments.debug else logging.ERROR)
 
     # Create the stack logger
-    logger = logging.getLogger('pylon-rtk.fiat-lux')
+    logger = logging.getLogger('pylon-rtk.led')
 
     # Set low-level stack trace logging if requested
     if arguments.debug:
@@ -301,44 +256,112 @@ def main():
         show_prompt()
     app.OnOffline += on_offline
 
-    #
-    # Functional blocks
-    #
-    # Pressure sensor blocks
-    if arguments.sensor == 'single':
-        # Single sensor
-        pressure_sensor_block = app.block(
-             profile=pylon.resources.profiles.closedLoopSensor.closedLoopSensor(),
-             ext_name='FPpressureSensor',
-             xxx=pylon.resources.datapoints.count.count)
-    elif arguments.sensor == 'multi':
-        # Create one sensor per LED
-        pressure_sensor_block = tuple(
-            app.block(profile=pylon.resources.profiles.closedLoopSensor.closedLoopSensor(),
-                      ext_name='FPpressureSensor{0}'.format(i),
-                      xxx=pylon.resources.datapoints.count.count)
-            for i in range(MAX_PRESSURE_SENSORS))
-        # Give member of the tuple a size and index for later referencing
-        for block_index in range(len(pressure_sensor_block)):
-            pressure_sensor_block[block_index].array_size = \
-                len(pressure_sensor_block)
-            pressure_sensor_block[block_index].array_index = block_index
 
-    # IoT mode blocks
+    #
+    # Initialize pressure sensors
+    #
+
+    # Check how many sensors are needed
+    if arguments.sensor == 'single':
+        # One pressure sensor for all LEDs
+        total_pressure_sensors = 1
+    elif arguments.sensor == 'multi':
+        # One pressure sensor for each RGB LED
+        total_pressure_sensors = MAX_PRESSURE_SENSORS
+    else:
+        # No sensors at all
+        total_pressure_sensors = 0
+
+    # Create the required sensors
+    for i in range(total_pressure_sensors):
+
+        # Add a sensor object to the list
+        pressure_sensors.append(Sensor)
+
+        # Add the hw pressure sensor
+        try:
+            pressure_sensors[i].sensor = PressureSensor(PRESSURE_SENSOR_PINS[i],
+                                                        arguments.debug)
+        except Exception as e:
+            print('Cannot find pressure sensor number ' + str(i))
+            print(e)
+            # Disable pressure sensor
+            pressure_sensors[i].is_enabled = False
+
+        # Create the pressure sensor blocks
+        pressure_sensors[i].block = app.block(
+            profile=pylon.resources.profiles.closedLoopSensor.closedLoopSensor(),
+            ext_name='FPpressureSensor{0}'.format(i),
+            xxx=pylon.resources.datapoints.count.count)
+
+        # Give each block a size and index for later referencing
+        pressure_sensors[i].block.array_size = total_pressure_sensors
+        pressure_sensors[i].block.array_index = i
+
+        # enable the sensor
+        pressure_sensors[i].is_enabled = True
+
+    # Update handlers for remote pressure sensor change
+    def on_pressure_nvi_value_fb_update(sender, event_data):
+        # TODO: double check with Rich
+        # Simply propagate the new pressure value
+        pressure_sensors[sender.block.array_index].block.nvoValue.data = \
+            sender.data
+    for i in range(len(pressure_sensors)):
+        pressure_sensors[i].block.nviValueFb.OnUpdate += \
+            on_pressure_nvi_value_fb_update
+
+
+    #
+    # Initialize LEDs
+    #
+
+    # Create the LED objects
+    if not arguments.legacy and (arguments.color or arguments.piface):
+        for i in range(MAX_LEDs):
+
+            # Add an led object to the list
+            leds.append(Led)
+
+            # Add the hw LED
+            if arguments.color:
+                try:
+                    leds[i] = RGBLed(i, arguments.debug)
+                    # Detect which LEDs are actually present
+                    if True:  # TODO: actually detect it
+                        leds[i].is_enabled = True
+                    else:
+                        leds[i].is_enabled = False
+                except Exception as e:
+                    print('Cannot find the LED light controller.')
+                    print(e)
+                    # Disable color LED and sensor
+                    arguments.color = False
+                    arguments.sensor = 'none'
+            elif arguments.piface:
+                try:
+                    leds[i] = PiFaceLed(arguments.debug)
+                except Exception as e:
+                    print('Cannot find the PiFace board')
+                    print(e)
+                    # Disable PiFace and sensor
+                    arguments.piface = False
+                    arguments.sensor = 'none'
+
+            # Add the LED block
+            leds[i].block = app.block(
+                    profile=pylon.resources.profiles.iotLoad.iotLoad(),
+                    ext_name='ColorLamp{0}'.format(i),
+                    # specify the number of scenes I want to save. Default is 2
+                    array_desc={'cpScene': arguments.scenes})
+
+        # Give each block of the LED list a size and index for later referencing
+        for block_index in range(len(leds)):
+            leds[block_index].block.array_size = len(leds)
+            leds[block_index].block.array_index = block_index
+
+    # Other IoT mode blocks
     if not arguments.legacy:
-        # Create the LED blocks as tuples of IoT Load Control blocks
-        # one for each physical LED
-        led_iot_blocks = tuple(
-            app.block(
-                profile=pylon.resources.profiles.iotLoad.iotLoad(),
-                ext_name='ColorLamp{0}'.format(i),
-                # specify the number of scenes I want to save. Default is 2
-                array_desc={'cpScene': arguments.scenes})
-            for i in range(MAX_LEDs))
-        # Give each member of the tuple a size and index for later referencing
-        for block_index in range(len(led_iot_blocks)):
-            led_iot_blocks[block_index].array_size = len(led_iot_blocks)
-            led_iot_blocks[block_index].array_index = block_index
 
         # Create the power monitor blocks as tuples of IoT Analog Input blocks,
         # one for each physical LED
@@ -401,13 +424,13 @@ def main():
                         # Set the LED state, level, and color to the specified values
                         set_led_status(sender.data.state, sender.data.level, sender.data.color.encoding,
                                        sender.data.color.color_value.RGB.red, sender.data.color.color_value.RGB.green,
-                                       sender.data.color.color_value.RGB.blue, sender.data.scene_number, led_controller,
-                                       sender_block_index, led_iot_blocks[sender_block_index], arguments)
+                                       sender.data.color.color_value.RGB.blue, sender.data.scene_number, leds,
+                                       sender_block_index, leds[sender_block_index].block, arguments)
                     elif sender.data.control == LoadControl.load_control_t.LOAD_RECALL_SCENE:
 
                         # recall an existing scene
                         if sender.data.scene_number < arguments.scenes:
-                            scene = led_iot_blocks[sender_block_index].cpScene[sender.data.scene_number]
+                            scene = leds[sender_block_index].block.cpScene[sender.data.scene_number]
                             set_led_status(
                                 scene.state,
                                 scene.level,
@@ -416,61 +439,60 @@ def main():
                                 scene.color.color_value.RGB.green,
                                 scene.color.color_value.RGB.blue,
                                 sender.data.scene_number,
-                                led_controller,
+                                leds,
                                 sender_block_index,
-                                led_iot_blocks[sender_block_index],
+                                leds[sender_block_index].block,
                                 arguments)
 
                         # or recall hard-coded scenes instead
                         if sender.data.state == arguments.scenes:
-                            set_led_status(0, float('nan'), RGB_TYPE, 255, 255, 255, 65535, led_controller, 0,
-                                           led_iot_blocks[0], arguments)
-                            set_led_status(0, float('nan'), RGB_TYPE, 255, 255, 255, 65535, led_controller, 1,
-                                           led_iot_blocks[1], arguments)
+                            set_led_status(0, float('nan'), RGB_TYPE, 255, 255, 255, 65535, leds, 0,
+                                           leds[0], arguments)
+                            set_led_status(0, float('nan'), RGB_TYPE, 255, 255, 255, 65535, leds, 1,
+                                           leds[1], arguments)
                         elif sender.data.scene_number == arguments.scenes + 1:
-                            set_led_status(1, float('nan'), RGB_TYPE, 100, 0, 0, 65535, led_controller, 0,
-                                           led_iot_blocks[0], arguments)
-                            set_led_status(1, float('nan'), RGB_TYPE, 100, 100, 0, 65535, led_controller, 1,
-                                           led_iot_blocks[1], arguments)
+                            set_led_status(1, float('nan'), RGB_TYPE, 100, 0, 0, 65535, leds, 0,
+                                           leds[0], arguments)
+                            set_led_status(1, float('nan'), RGB_TYPE, 100, 100, 0, 65535, leds, 1,
+                                           leds[1], arguments)
                         elif sender.data.scene_number == arguments.scenes + 2:
-                            set_led_status(1, float('nan'), RGB_TYPE, 0, 100, 0, 65535, led_controller, 0,
-                                           led_iot_blocks[0], arguments)
-                            set_led_status(1, float('nan'), RGB_TYPE, 0, 100, 100, 65535, led_controller, 1,
-                                           led_iot_blocks[1], arguments)
+                            set_led_status(1, float('nan'), RGB_TYPE, 0, 100, 0, 65535, leds, 0,
+                                           leds[0], arguments)
+                            set_led_status(1, float('nan'), RGB_TYPE, 0, 100, 100, 65535, leds, 1,
+                                           leds[1], arguments)
                         elif sender.data.scene_number == arguments.scenes + 3:
-                            set_led_status(1, float('nan'), RGB_TYPE, 0, 0, 100, 65535, led_controller, 0,
-                                           led_iot_blocks[0], arguments)
-                            set_led_status(1, float('nan'), RGB_TYPE, 100, 0, 255, 65535, led_controller, 1,
-                                           led_iot_blocks[1], arguments)
+                            set_led_status(1, float('nan'), RGB_TYPE, 0, 0, 100, 65535, leds, 0,
+                                           leds[0], arguments)
+                            set_led_status(1, float('nan'), RGB_TYPE, 100, 0, 255, 65535, leds, 1,
+                                           leds[1], arguments)
                         elif sender.data.scene_number == arguments.scenes + 4:
-                            set_led_status(1, float('nan'), RGB_TYPE, 10, 200, 10, 65535, led_controller, 0,
-                                           led_iot_blocks[0], arguments)
-                            set_led_status(1, float('nan'), RGB_TYPE, 100, 100, 150, 65535, led_controller, 1,
-                                           led_iot_blocks[1], arguments)
-
+                            set_led_status(1, float('nan'), RGB_TYPE, 10, 200, 10, 65535, leds, 0,
+                                           leds[0], arguments)
+                            set_led_status(1, float('nan'), RGB_TYPE, 100, 100, 150, 65535, leds, 1,
+                                           leds[1], arguments)
 
                     elif sender.data.control == LoadControl.load_control_t.LOAD_INCREMENT:
                         # increment the current level by adding the new input level
                         set_led_status(sender.data.state,
                                        max(MIN_LUMINANCE_LEVEL,
                                            min(MAX_LUMINANCE_LEVEL,
-                                               led_iot_blocks[sender_block_index].nvoLoadStatus.data.level +
+                                               leds[sender_block_index].block.nvoLoadStatus.data.level +
                                                    sender.data.level)),
                                        sender.data.color.encoding,
                                        sender.data.color.color_value.RGB.red,
                                        sender.data.color.color_value.RGB.green,
                                        sender.data.color.color_value.RGB.blue,
                                        sender.data.scene_number,
-                                       led_controller,
+                                       leds,
                                        sender_block_index,
-                                       led_iot_blocks[sender_block_index],
+                                       leds[sender_block_index].block,
                                        arguments)
                     elif sender.data.control == LoadControl.load_control_t.LOAD_INCREMENT_HUE:
                         # convert to HLS
                         hls_color = colorsys.rgb_to_hls(
-                            led_iot_blocks[sender_block_index].nvoLoadStatus.data.color.color_value.RGB.red,
-                            led_iot_blocks[sender_block_index].nvoLoadStatus.data.color.color_value.RGB.green,
-                            led_iot_blocks[sender_block_index].nvoLoadStatus.data.color.color_value.RGB.blue)
+                            leds[sender_block_index].block.nvoLoadStatus.data.color.color_value.RGB.red,
+                            leds[sender_block_index].block.nvoLoadStatus.data.color.color_value.RGB.green,
+                            leds[sender_block_index].block.nvoLoadStatus.data.color.color_value.RGB.blue)
                         # Increase hue and make sure it's within boundaries
                         adjusted_rgb = colorsys.hls_to_rgb(
                             max(MIN_HUE_LEVEL,
@@ -486,16 +508,16 @@ def main():
                                        adjusted_rgb[GREEN],
                                        adjusted_rgb[BLUE],
                                        sender.data.scene_number,
-                                       led_controller,
+                                       leds,
                                        sender_block_index,
-                                       led_iot_blocks[sender_block_index],
+                                       leds[sender_block_index].block,
                                        arguments)
-                    # extraxct required vlaues from input dp, and save tham in the specified scene
+                    # extract required values from input dp, and save them in the specified scene
                     elif sender.data.control == LoadControl.load_control_t.LOAD_STORE_SCENE:
                         if sender.data.scene_number < arguments.scenes:
                             # if the specified scene number is within boundaries
                             define_scene_from_load_dp(
-                                led_iot_blocks[sender_block_index].cpScene[sender.data.scene_number],
+                                leds[sender_block_index].block.cpScene[sender.data.scene_number],
                                 sender)
 
                     # save snapshot of current status into the specified scene
@@ -503,14 +525,14 @@ def main():
                         if sender.data.scene_number < arguments.scenes:
                             # if the specified scene number is within boundaries
                             define_scene_from_load_dp(
-                                led_iot_blocks[sender_block_index].cpScene[sender.data.scene_number],
-                                led_iot_blocks[sender_block_index].nvoLoadStatus)
+                                leds[sender_block_index].block.cpScene[sender.data.scene_number],
+                                leds[sender_block_index].block.nvoLoadStatus)
 
                     print('LED {0} input is control {1}, state {2}, '
                           'level {3}, color {4}R : {5}G : {6}B, scene {7}'.format(
-                                sender_block_index, sender.data.control, sender.data.state, sender.data.level,
-                                sender.data.color.color_value.RGB.red, sender.data.color.color_value.RGB.green,
-                                sender.data.color.color_value.RGB.blue, sender.data.scene_number))
+                               sender_block_index, sender.data.control, sender.data.state, sender.data.level,
+                               sender.data.color.color_value.RGB.red, sender.data.color.color_value.RGB.green,
+                               sender.data.color.color_value.RGB.blue, sender.data.scene_number))
             except Exception as rgb_exception:
                 print('Something just went wrong when updating RGB values '
                       'in on_led_nvi_load_control_update({0}):'
@@ -544,15 +566,15 @@ def main():
 
                         # Set the new brightness
                         if arguments.color:
-                            led_controller.set_channel_level(
+                            leds[0].set_led_status(
                                 RED_LED_PWM_CHANNEL, brightness)
-                            led_controller.set_channel_level(
+                            leds[0].set_channel_level(
                                 GREEN_LED_PWM_CHANNEL, brightness)
-                            led_controller.set_channel_level(
+                            leds[0].set_channel_level(
                                 BLUE_LED_PWM_CHANNEL, brightness)
 
                         elif arguments.piface:
-                            led_controller.set_channel_level(0, brightness)
+                            leds.set_channel_level(0, brightness)
 
                         print("LED has now value {0}, state {1}".format(
                             led_legacy_block.nviValue.data.value,
@@ -570,17 +592,6 @@ def main():
         # Create the on update handler for the nviValue input
         led_legacy_block.nviValue.OnUpdate += on_legacy_led_nvi_value_update
 
-    # Update handler for remote pressure sensor change
-    # TODO: fix for multiple sensors
-    if arguments.sensor != 'none':
-        def on_remote_pressure_update(sender, event_data):
-            # Simply propagate the new pressure value ???
-            # TODO: double check with Rich
-            pressure_sensor_block.nvoValue.data = \
-                pressure_sensor_block.nviValueFb.data
-        # Set the on update handler for the nviValue input
-        pressure_sensor_block.nviValueFb.OnUpdate += \
-            on_remote_pressure_update
 
     #
     # ISI Assembly objects
@@ -588,27 +599,21 @@ def main():
     if app.isi and not arguments.standalone:
         led_assembly = pylon.device.isi.Assembly(
             assembly=(
-                (led_iot_blocks[0].nviLoadControl,
-                 led_iot_blocks[0].nvoLoadStatus)),
+                (leds[0].nviLoadControl,
+                 leds[0].nvoLoadStatus)),
             enrollment=pylon.device.isi.Enrollment(
                 direction=pylon.device.isi.IsiDirection.VARIOUS,
-                type_id=led_iot_blocks[0].nviLoadControl))
+                type_id=leds[0].nviLoadControl))
 
         if arguments.sensor != 'none':
-            # Assembly for the local sensor pressure (output)
-            # TODO: make one assembly per sensor with VARIOUS direction
+            # Assembly for the local sensor
             pressure_sensor_output_assembly = pylon.device.isi.Assembly(
-                assembly=pressure_sensor_block.nvoValue,
+                assembly=(
+                    (pressure_sensors[0].block.nviValueFb,
+                     pressure_sensors[0].block.nvoValue)),
                 enrollment=pylon.device.isi.Enrollment(
-                    direction=pylon.device.isi.IsiDirection.OUTPUT,
-                    type_id=pressure_sensor_block.nvoValue))
-
-            # Assembly for the pressure arriving to me over the net (input)
-            pressure_sensor_input_assembly = pylon.device.isi.Assembly(
-                assembly=pressure_sensor_block.nviValueFb,
-                enrollment=pylon.device.isi.Enrollment(
-                    direction=pylon.device.isi.IsiDirection.INPUT,
-                    type_id=pressure_sensor_block.nviValueFb))
+                    direction=pylon.device.isi.IsiDirection.VARIOUS,
+                    type_id=pressure_sensors[0].block.nviValueFb))
 
     #
     #   ISI user interface event handler
@@ -686,7 +691,7 @@ def main():
 
             # Test for and process interactive user input
             if kbhit(0.005):
-                done = menu(app, led_controller, led_iot_blocks, arguments)
+                done = menu(app, leds, led_iot_blocks, arguments)
 
             # Process pressure sensor input if the sensor is enabled
             # TODO: move to a separate thread
@@ -694,7 +699,8 @@ def main():
                 try:
                     # Read pressure from the local sensor and from the net whichever is higher
                     # Note: more pressure == smaller value
-                    pressure = get_pressure(pressure_sensor, pressure_sensor_block)
+                    pressure = get_pressure(pressure_sensors[0].sensor,
+                                            pressure_sensors[0].block)
                 except Exception as e:
                     print('Cannot read pressure sensor (not running as root?)')
                     print('Error: {0}'.format(e))
@@ -704,15 +710,13 @@ def main():
                 #     print("Pressure is: " + str(pressure))
                 #     show_prompt()
 
-                # If pressure is high enough and there is a dimmable led
-                if (pressure < PRESSURE_DIMMING_THRESHOLD and
-                    arguments.color):
+                # If pressure is high enough and there are dimmable leds
+                if pressure < PRESSURE_DIMMING_THRESHOLD and arguments.color:
 
                     # Next time we dim the other direction
                     dimming_down = not dimming_down
 
                     # Cycle LED brightness until user presses the sensor
-                    # TODO: make dimming proportional to pressure level
                     while pressure < PRESSURE_DIMMING_THRESHOLD:
                         # Service the IoT stack
                         app.service()
@@ -728,7 +732,7 @@ def main():
                             # For each detected LED set the new color
                             for i in range(MAX_LEDs):
                                 # If we detected LED i
-                                if led_controller.detected_led[i]:
+                                if leds.detected_led[i]:
                                     # For shorter name
                                     load_status = led_iot_blocks[i].nvoLoadStatus
 
@@ -773,7 +777,7 @@ def main():
                                     set_rgb_color(rgb_colors[RED],
                                                   rgb_colors[GREEN],
                                                   rgb_colors[BLUE],
-                                                  led_controller,
+                                                  leds,
                                                   i,
                                                   arguments)
                                     # Update output LED functional block
@@ -784,11 +788,11 @@ def main():
 
                         # Update pressure block on delta
                         old_pressure = pressure
-                        pressure = get_pressure(pressure_sensor,
-                                                pressure_sensor_block)
+                        pressure = get_pressure(pressure_sensors,
+                                                pressure_sensors.block)
                         # Send on delta
                         if abs(pressure - old_pressure) > PRESSURE_VALUE_DELTA:
-                            pressure_sensor_block.nvoValue.data = pressure
+                            pressure_sensors[0].block.nvoValue.data = pressure
 
     finally:
         # Stop the IP-C application
@@ -797,10 +801,11 @@ def main():
         app.stop()
         if arguments.sensor != 'none':
             # Close GPIO
-            pressure_sensor.cleanup()
+            for i in range(len(pressure_sensors)):
+                pressure_sensors[i].cleanup()
         if arguments.color:
             # reset LEDs
-            led_controller.cleanup()
+            leds.cleanup()
         print('Goodbye')
 
 ### End main function ###
